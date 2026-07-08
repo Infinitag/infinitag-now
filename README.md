@@ -37,4 +37,8 @@ Refactor-Dokumente 12/13/18.
 
 ## Lizenz
 
-CC BY-NC-SA 4.0 – Tobias Stewen, Jani Taxidis, Florian Kleene (2017 ff.)
+CC BY-NC-SA 4.0 – Tobias Stewen.
+
+Infinitag Now ist eine **komplette Neuentwicklung** von Tobias Stewen –
+eigenes Protokoll, eigene Hardware, eigene Firmware. Mit dem klassischen
+Infinitag (2017) teilt es nur den Namenskosmos und die Grundidee.
