@@ -69,8 +69,9 @@ Drei Hardware‑Bausteine, alle ESP32‑basiert:
 | [`15-bestellliste-station-v2.md`](15-bestellliste-station-v2.md) | **Bestellliste** für das Station‑V2‑PCB (Inventar‑Check, LCSC‑Teile, AliExpress‑Module, JLCPCB‑Optionen) |
 | [`16-pcb-layout-hinweise.md`](16-pcb-layout-hinweise.md) | **Layout‑Hinweise** für das PCB‑Routing (Bypass‑Platzierung, Stern‑GND, I²S‑Routing, Trace‑Breiten) |
 | [`17-bring-up-prototyp-1.md`](17-bring-up-prototyp-1.md) | **Bring‑Up Plan** für den ersten PCB‑Prototyp (Bestueckungsreihenfolge, Tests, verschobene Verifikationspunkte) |
-| [`18-config-tool.md`](18-config-tool.md) | **Lebendes Konzept‑Dokument** zur zentralen Config‑Box (ESP32‑S3 + OLED + Rotary Encoder, stateless, ESP‑NOW‑Discovery + Identify‑Blink, Web‑UI im SoftAP) |
+| [`18-config-tool.md`](18-config-tool.md) | **Lebendes Konzept‑Dokument** zur zentralen Config‑Box (ESP32‑C3 Super Mini + OLED + Rotary Encoder, stateless, ESP‑NOW‑Discovery + Identify‑Blink, Web‑UI im SoftAP) |
 | [`19-pcb-split-netliste.md`](19-pcb-split-netliste.md) | **Arbeitsdokument** zum Station‑V2 PCB‑Split: Bauteil‑/Netz‑Aufteilung Logic‑Board ↔ Audio‑Board, Inter‑Board‑Pinout, EasyEDA‑Vorgehen |
+| [`20-configbox-steckbrett.md`](20-configbox-steckbrett.md) | **Aufbau‑Anleitung** für den Config‑Box‑Steckbrett‑Prototyp: Verdrahtung nach GPIO‑Plan v3, Flash‑Anleitung, Bring‑up in 6 Stufen, Troubleshooting |
 
 ## Quellverweise
 

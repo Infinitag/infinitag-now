@@ -34,7 +34,8 @@ erreicht.
 | OLED | **0,96" SSD1315 128×64 I²C** mit integriertem 4‑Tasten‑Board (K1–K4). Ersetzt das 1,3"‑SH1106/DST‑015‑0 vom 18.05.; Tastenbelegung bleibt identisch zur Station | ✅ geändert 2026‑07‑08 |
 | Web‑UI | **SoftAP** auf der Config‑Box (`Infinitag-Config` SSID), Mini‑Webserver mit Übersicht + Edit‑Forms, Sound‑Namen statt ‑IDs | ✅ gesetzt 2026‑05‑18 |
 | Geräte‑Auswahl | **Discovery + Identify‑Blink** (Standardweg). IR‑Pointer **nicht** in V1 (Tobias hat ihn 2026‑05‑18 verworfen zugunsten des Encoders); Protokoll‑Hook (`IR_SELECT_ECHO`) bleibt latent reserviert | ✅ gesetzt 2026‑05‑18 |
-| Status‑LED | 1× SK6812RGBW am Gehäuse, gleiche Farbcodes wie Station (Lila = Setup‑Modus, Grün = OK …) | ✅ gesetzt 2026‑05‑18 |
+| Status‑LED | **Gestrichen** – das OLED zeigt alle Status (Speichern/Fehler/Setup) als Text; freigewordener Pin ging an die Batteriemessung. Ersetzt SK6812‑Plan vom 18.05. | ✅ geändert 2026‑07‑09 |
+| Batterieanzeige | **VBAT‑Messung** über 100k/47k‑Teiler an GPIO3 (ADC1_CH3); Anzeige im Tools‑Menü, < 3 V ⇒ „USB" | ✅ neu 2026‑07‑09 |
 | Gehäuse | 3D‑Druck‑Box, OLED‑Fenster + Encoder‑Achse + 4 Drucktasten an der Frontplatte, USB‑C an der Rückseite | offen, CAD nach Lochraster |
 | GPIO‑Plan | siehe Abschnitt 4 | ✅ Konzept, im Lochraster zu verifizieren |
 | Erster Hardware‑Schritt | Lochraster‑Prototyp auf Steckbrett (C3 Super Mini + OLED + Encoder lose verkabelt) | offen, nach Bestellung |
@@ -166,7 +167,13 @@ USB‑C (Flashen/Service) ──────────────────
   freier Pins (und wegen Strapping‑Randbedingungen an GPIO2) **nicht**
   vorgesehen – Zellen wechseln und gut.
 
-### 4.3 GPIO‑Plan (C3 Super Mini, Konzept v2)
+### 4.3 GPIO‑Plan (C3 Super Mini, Konzept v3)
+
+**Revision 2026‑07‑09 (v3):** Status‑LED gestrichen (OLED zeigt alles).
+Der dadurch mögliche Umbau: Encoder‑Push wandert von GPIO3 auf GPIO21,
+GPIO3 wird **Batteriespannungs‑Messung** – denn ADC ist auf dem C3 nur
+auf GPIO0–4 nutzbar (GPIO5 = ADC2, mit aktivem WLAN unbrauchbar), und
+GPIO3 war der einzige sinnvoll freischaufelbare ADC‑Pin.
 
 Nutzbare Pins am Super Mini: GPIO 0–10, 20, 21. Strapping‑Pins: GPIO2
 (muss beim Boot high/floating sein), GPIO8 (Onboard‑LED, muss beim Boot
@@ -177,21 +184,25 @@ geflasht/geloggt wird über den nativen USB‑Serial‑JTAG → frei nutzbar.
 |---|---|---|
 | **GPIO0** | Encoder A | Interrupt‑Input (kein PCNT im C3) |
 | **GPIO1** | Encoder B | Interrupt‑Input |
-| **GPIO3** | Encoder Push | Input mit internem Pullup, gegen GND |
+| **GPIO3** | **VBAT‑Messung** | ADC1_CH3; Teiler VBAT –[100k]– GPIO3 –[47k]– GND (6,4 V → ~2,05 V) |
 | **GPIO4** | OLED‑Taste K1 (Menü/Zurück) | Input mit internem Pullup |
 | **GPIO5** | OLED‑Taste K2 (∧ / Modifier) | Input mit internem Pullup |
 | **GPIO6** | I²C SDA (OLED) | `Wire.begin(6, 7)` |
 | **GPIO7** | I²C SCL (OLED) | |
 | **GPIO10** | OLED‑Taste K3 (∨ / Identify‑Toggle) | Input mit internem Pullup |
 | **GPIO20** | OLED‑Taste K4 (OK) | UART‑RX0, frei bei USB‑CDC |
-| **GPIO21** | Status‑NeoPixel (SK6812RGBW) | UART‑TX0, frei bei USB‑CDC; RMT |
+| **GPIO21** | Encoder Push | UART‑TX0, frei bei USB‑CDC; Input mit internem Pullup |
 | GPIO2 | **frei / Reserve** | Strapping: nur Lasten ohne Pulldown (z. B. passiver Piezo) |
-| GPIO8 | Onboard‑LED (blau, invertiert) | nicht extern belegen |
+| GPIO8 | Onboard‑LED (blau, invertiert) | ohne Verdrahtung als Heartbeat nutzbar |
 | GPIO9 | BOOT‑Taster onboard | frei lassen |
 
 **Bilanz:** 10 Pins fest, GPIO2 als einzige Reserve. Der latente
 IR‑Pointer‑Ausgang (§ 10) müsste sich GPIO2 nehmen oder den Piezo
 verdrängen – bewusster Verzicht auf Erweiterungskomfort.
+
+**VBAT‑Anzeige in der Firmware:** `analogReadMilliVolts(3)` ×
+Teilerfaktor 147/47; im Tools‑Menü als „Batt x,xx V". Liest der Pin
+< 3 V (keine Batterien, Betrieb an USB), zeigt die Box „USB".
 
 **Verifikationspunkte für den Lochraster‑Prototyp:**
 
@@ -220,7 +231,7 @@ verdrängen – bewusster Verzicht auf Erweiterungskomfort.
 | Batteriehalter | 4×AA mit Anschlusskabel (GTIWUNG 6er‑Pack) | 1 | ~1,20 € | Amazon 6er‑Pack 6,99 € (Tobias' Fund) |
 | Schiebeschalter | beliebiger 1‑pol Schiebe‑/Kippschalter | 1 | 0,30 € | vorhanden |
 | Verpolungs-/LDO‑Schutz | Schottky 1N5817 | 1 | 0,10 € | vorhanden |
-| Status‑LED | SK6812RGBW 5050 (auf Mini‑Breakout) | 1 | 0,30 € | vorhanden |
+| VBAT‑Teiler | Widerstände 100 kΩ + 47 kΩ (Metallfilm) | je 1 | 0,05 € | vorhanden |
 | Gehäuse | 3D‑Druck PETG | 1 | 0 € | Eigenfertigung |
 | USB‑C‑Kabel | beliebiges Datenkabel (nur Service) | 1 | – | vorhanden |
 | Lochraster | 50×70 mm Streifenraster | 1 | 0,50 € | vorhanden |
@@ -586,12 +597,11 @@ Code ein Menü „Tools → IR‑Pointer" aktivieren. Aufwand: ~ein Abend.
 Vorderansicht (~80 × 60 mm)
 ┌────────────────────────────────┐
 │  ┌────────────────┐            │
-│  │  OLED 1,3"     │     ⊙      │
+│  │  OLED 0,96"    │     ⊙      │
 │  │  128 × 64      │  (Encoder) │
 │  └────────────────┘            │
 │   K1   K2   K3   K4            │
-│   ●    ●    ●    ●     ▪       │
-│                       (LED)    │
+│   ●    ●    ●    ●             │
 └────────────────────────────────┘
 
 Rückseite / Boden:
@@ -606,8 +616,6 @@ Rückseite / Boden:
   bekommt **vier zylindrische Aussparungen Ø 5 mm** über den
   Taster‑Stempeln. Optional Plunger‑Käppchen drucken (PETG natur),
   damit man die Taster außen erreicht.
-- **Status‑LED**: Bohrung Ø 3 mm, von innen mit Heißkleber‑Tropfen als
-  Diffusor verschlossen.
 - **USB‑C‑Buchse**: seitlich/hinten ausgespart (nur Service/Flashen),
   C3 Super Mini entsprechend ausgerichtet montiert.
 - **Batteriefach**: 4×AA‑Halter im Gehäuseboden, Deckel geschraubt oder
@@ -625,9 +633,9 @@ Lochraster.
 
 - [ ] **Bestellen** (2026‑07‑08 rausgesucht): C3 Super Mini mit Antenne,
       SSD1315‑OLED mit Tasten, KY‑040‑Pack, 4×AA‑Halter‑Pack.
-- [ ] **Lochraster aufbauen**: C3 Super Mini + OLED + KY‑040 + 1 NeoPixel,
-      Encoder per Interrupt‑Lib (kein PCNT auf C3!) testen,
-      OLED‑Menü‑Skeleton schreiben.
+- [ ] **Lochraster aufbauen**: C3 Super Mini + OLED + KY‑040 + VBAT‑Teiler,
+      Encoder per Interrupt‑Lib (kein PCNT auf C3!) testen. Verdrahtung
+      und Bring‑up‑Plan: [`20-configbox-steckbrett.md`](20-configbox-steckbrett.md).
 - [x] **ESP‑NOW‑Skeleton** auf der Config‑Box: als Teil der Firmware V0.1
       geschrieben (2026‑07‑08, `firmware/config-box/`). Noch offen: gegen
       einen zweiten ESP testen, der die Station‑Firmware in Stub‑Form spielt.
