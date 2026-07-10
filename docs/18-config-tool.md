@@ -28,14 +28,14 @@ erreicht.
 |---|---|---|
 | MCU | **ESP32‑C3 Super Mini** (Variante mit IPEX + externer Antenne). Ersetzt den S3‑DevKitC‑1U vom 18.05. – kleiner, günstiger, reicht für die Aufgabe; Trade‑offs siehe § 4.1 | ✅ geändert 2026‑07‑08 |
 | Antenne | Externe 2,4‑GHz‑Antenne über IPEX‑Pigtail (beim C3‑Board dabei) | ✅ geändert 2026‑07‑08 |
-| Versorgung | **4×AA** über Schiebeschalter + Schottky‑Diode an 5V‑Pin; USB‑C parallel nutzbar (Flashen/Service). Ersetzt „USB‑C only" vom 18.05. | ✅ geändert 2026‑07‑08 |
+| Versorgung | **4×AA** über Schiebeschalter + Schottky‑Diode an 5V‑Pin; USB‑C fürs Flashen/Service – **aber nicht gleichzeitig mit frischen Alkalines** (Backfeed ~6 V in den Host, Details Doc 20 § 2). Regel: erst Schalter aus, dann USB rein. Ersetzt „USB‑C only" vom 18.05. | ✅ geändert 2026‑07‑08, Einschränkung 2026‑07‑09 |
 | **Persistenz‑Modell** | **Stateless** – Config‑Box speichert nichts dauerhaft über Stationen/Targets. Jeder Discovery‑Zyklus baut die Liste neu. Source of Truth ist das jeweilige Gerät selbst (NVS). | ✅ gesetzt 2026‑05‑18 |
 | Bedien‑Eingaben | **Rotary Encoder (KY‑040 = EC11 mit Push auf Breakout)** als Primärbedienung, **OLED + 4‑Tasten‑Modul** als sekundäre/spezialisierte Eingabe | ✅ gesetzt 2026‑05‑18, KY‑040 bestätigt 2026‑07‑08 |
 | OLED | **0,96" SSD1315 128×64 I²C** mit integriertem 4‑Tasten‑Board (K1–K4). Ersetzt das 1,3"‑SH1106/DST‑015‑0 vom 18.05.; Tastenbelegung bleibt identisch zur Station | ✅ geändert 2026‑07‑08 |
 | Web‑UI | **SoftAP** auf der Config‑Box (`Infinitag-Config` SSID), Mini‑Webserver mit Übersicht + Edit‑Forms, Sound‑Namen statt ‑IDs | ✅ gesetzt 2026‑05‑18 |
 | Geräte‑Auswahl | **Discovery + Identify‑Blink** (Standardweg). IR‑Pointer **nicht** in V1 (Tobias hat ihn 2026‑05‑18 verworfen zugunsten des Encoders); Protokoll‑Hook (`IR_SELECT_ECHO`) bleibt latent reserviert | ✅ gesetzt 2026‑05‑18 |
 | Status‑LED | **Gestrichen** – das OLED zeigt alle Status (Speichern/Fehler/Setup) als Text; freigewordener Pin ging an die Batteriemessung. Ersetzt SK6812‑Plan vom 18.05. | ✅ geändert 2026‑07‑09 |
-| Batterieanzeige | **VBAT‑Messung** über 100k/47k‑Teiler an GPIO3 (ADC1_CH3); Anzeige im Tools‑Menü, < 3 V ⇒ „USB" | ✅ neu 2026‑07‑09 |
+| Batterieanzeige | **VBAT‑Messung** über 100k/22k‑Teiler an GPIO3 (ADC1_CH3); Anzeige im Tools‑Menü, < 3 V ⇒ „USB". (Ursprünglich 47k unten geplant, gebaut mit 10k+12k in Serie) | ✅ neu 2026‑07‑09, Teiler angepasst 2026‑07‑09 |
 | Gehäuse | 3D‑Druck‑Box, OLED‑Fenster + Encoder‑Achse + 4 Drucktasten an der Frontplatte, USB‑C an der Rückseite | offen, CAD nach Lochraster |
 | GPIO‑Plan | siehe Abschnitt 4 | ✅ Konzept, im Lochraster zu verifizieren |
 | Erster Hardware‑Schritt | Lochraster‑Prototyp auf Steckbrett (C3 Super Mini + OLED + Encoder lose verkabelt) | offen, nach Bestellung |
@@ -184,7 +184,7 @@ geflasht/geloggt wird über den nativen USB‑Serial‑JTAG → frei nutzbar.
 |---|---|---|
 | **GPIO0** | Encoder A | Interrupt‑Input (kein PCNT im C3) |
 | **GPIO1** | Encoder B | Interrupt‑Input |
-| **GPIO3** | **VBAT‑Messung** | ADC1_CH3; Teiler VBAT –[100k]– GPIO3 –[47k]– GND (6,4 V → ~2,05 V) |
+| **GPIO3** | **VBAT‑Messung** | ADC1_CH3; Teiler VBAT –[100k]– GPIO3 –[10k+12k=22k]– GND (6,4 V → ~1,15 V) |
 | **GPIO4** | OLED‑Taste K1 (Menü/Zurück) | Input mit internem Pullup |
 | **GPIO5** | OLED‑Taste K2 (∧ / Modifier) | Input mit internem Pullup |
 | **GPIO6** | I²C SDA (OLED) | `Wire.begin(6, 7)` |
@@ -201,7 +201,7 @@ IR‑Pointer‑Ausgang (§ 10) müsste sich GPIO2 nehmen oder den Piezo
 verdrängen – bewusster Verzicht auf Erweiterungskomfort.
 
 **VBAT‑Anzeige in der Firmware:** `analogReadMilliVolts(3)` ×
-Teilerfaktor 147/47; im Tools‑Menü als „Batt x,xx V". Liest der Pin
+Teilerfaktor 122/22; im Tools‑Menü als „Batt x,xx V". Liest der Pin
 < 3 V (keine Batterien, Betrieb an USB), zeigt die Box „USB".
 
 **Verifikationspunkte für den Lochraster‑Prototyp:**
@@ -230,8 +230,8 @@ Teilerfaktor 147/47; im Tools‑Menü als „Batt x,xx V". Liest der Pin
 | Encoder‑Knopf | beim KY‑040‑Pack dabei, alternativ PETG‑Druck | 1 | 0 € | enthalten |
 | Batteriehalter | 4×AA mit Anschlusskabel (GTIWUNG 6er‑Pack) | 1 | ~1,20 € | Amazon 6er‑Pack 6,99 € (Tobias' Fund) |
 | Schiebeschalter | beliebiger 1‑pol Schiebe‑/Kippschalter | 1 | 0,30 € | vorhanden |
-| Verpolungs-/LDO‑Schutz | Schottky 1N5817 | 1 | 0,10 € | vorhanden |
-| VBAT‑Teiler | Widerstände 100 kΩ + 47 kΩ (Metallfilm) | je 1 | 0,05 € | vorhanden |
+| Verpolungs-/LDO‑Schutz | Schottky **SS34** (40 V/3 A, SMA‑SMD; ursprünglich 1N5817 geplant, elektrisch gleichwertig) | 1 | 0,10 € | vorhanden |
+| VBAT‑Teiler | Widerstände 100 kΩ + 10 kΩ + 12 kΩ (unten 10k+12k in Serie = 22k) | je 1 | 0,05 € | vorhanden |
 | Gehäuse | 3D‑Druck PETG | 1 | 0 € | Eigenfertigung |
 | USB‑C‑Kabel | beliebiges Datenkabel (nur Service) | 1 | – | vorhanden |
 | Lochraster | 50×70 mm Streifenraster | 1 | 0,50 € | vorhanden |
