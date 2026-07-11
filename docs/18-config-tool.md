@@ -252,17 +252,22 @@ OLED‑Layout: 128 × 64 Pixel, U8g2 Library, Font `u8g2_font_6x10_mf` für
 Listen (6 Zeilen × 21 Zeichen sichtbar) und `u8g2_font_helvB10_tf` für
 Überschriften.
 
+**Revidiert 2026‑07‑11 – geräte‑zentriert:** erst das Gerät aus der Liste
+wählen, danach öffnet sich dessen Geräte‑Menü mit allen Aktionen
+(Prusa‑Logik). Die früheren aktions‑zentrierten Untermenüs entfallen.
+
 ```
 Hauptmenü
-├── Stationen
-│   ├── [Liste]              ← Discovery + Identify‑Blink
-│   ├── Neue Station         ← SETUP_BEGIN, warte auf Trigger‑Bestätigung
-│   ├── Sound testen         ← Station auswählen, Sound auswählen, abspielen
-│   └── Selbsttest           ← Prusa‑artig: Sound/LEDs/Laser/IR/Trigger einzeln
-│                              oder „Alle testen", Ergebnis je Test (0xF0/0xF1)
-├── Targets
-│   ├── [Liste]              ← Discovery + Identify‑Blink
-│   └── Letztes Ziel         ← Komfort: erneut das zuletzt editierte Target
+├── Stationen                ← Geräteliste: < Zurück / Neu suchen /
+│   │                          Neue Station (Stab) / St.01, St.02, …
+│   └── Station wählen       ← Identify‑Blink folgt dem Cursor UND bleibt
+│       │                      im Geräte‑Menü aktiv („wen konfiguriere ich?")
+│       ├── Konfigurieren    ← Editor (ID, Volume, Setup‑Sound) + Speichern
+│       ├── Sound testen     ← Sound wählen + abspielen (0x32)
+│       └── Selbsttest       ← Prusa‑artig: Sound/LEDs/Laser/IR/Trigger
+│                              einzeln oder „Alle testen" (0xF0/0xF1)
+├── Targets                  ← Geräteliste: < Zurück / Neu suchen / T.01, …
+│   └── Target wählen        → Konfigurieren (Editor)
 ├── Live‑Monitor             ← zeigt eingehende HIT_REPORTs als Tickerzeile
 ├── Web‑UI                   ← SoftAP an/aus, zeigt IP + QR‑Code
 └── Tools
