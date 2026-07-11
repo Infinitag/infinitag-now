@@ -372,6 +372,8 @@ anderer ESP‑NOW‑Sender mitfunkt.
 | 0x31 | `CFG_ACK` | Station / Target | Config‑Box | Unicast | `payload[0]` = Status (0 = OK, 1 = NACK Persistierung, 2 = NACK Validierung) |
 | 0x32 | `CFG_TEST_SOUND` | Config‑Box | Station | Unicast | `payload[0]` = `sound_id` – nur abspielen, **nicht** persistieren. Festgelegt 2026‑07‑08 (vorher offener Punkt in Doc 18 § 6.3) |
 | 0xC0 | `IR_SELECT_ECHO` | Target | Config‑Box | Broadcast | `payload[0]` = Token aus IR‑Frame (Echo‑Schutz). Reserviert/latent – siehe 3.7. |
+| 0xF0 | `DEBUG_CMD` | Config‑Box | Gerät | Unicast | Selbsttest: `payload[0]` = Test‑Nr. (1 Sound, 2 LEDs, 3 Laser, 4 IR‑Burst mit TSOP‑Selbstempfang, 5 Trigger‑Warten), `payload[1]` = Parameter. Neu 2026‑07‑11, Katalog in `PROTOCOL.md` (Core‑Repo) |
+| 0xF1 | `DEBUG_RESULT` | Gerät | Config‑Box | Unicast | `payload[0]` = Test‑Nr., `payload[1]` = 0 OK / 1 FAIL / 2 TIMEOUT / 3 UNSUPPORTED |
 
 Reservierte Bereiche:
 

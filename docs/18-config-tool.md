@@ -87,6 +87,12 @@ erreicht.
 | **4 OLED‑Tasten** | komplett alles + spezialisierte Modifier (großer Schritt, Identify‑Toggle) | wenn der Encoder nicht reicht (z. B. Springen in langer Liste) oder als Fallback |
 | **Web‑UI im SoftAP** | komplett alles + Sound‑Namen statt ‑IDs + tabellarische Übersicht über alle Geräte | wenn ich mehrere Geräte am Stück konfiguriere oder Sound‑Klartext brauche |
 
+**Encoder‑only (Revision 2026‑07‑11):** Alle Menüs sind **vollständig ohne
+die K‑Tasten bedienbar** – jede Ebene hat einen expliziten „< Zurück"‑Eintrag
+(in Gerätelisten zusätzlich „Neu suchen"), und schnelles Drehen wirkt im
+Wert‑Editor automatisch als ×10. K1–K4 bleiben als Shortcuts erhalten
+(einzige Ausnahme: der Identify‑Blink‑Toggle liegt nur auf K3).
+
 **Bewusste Redundanz:** Encoder und K2/K3/K4 können *dasselbe* Bedien‑Ziel
 erreichen. Das ist gewollt, weil die Bedien‑Hand zwischen „Knopf greifen"
 und „Tasten tippen" wechseln darf, ohne Kontext zu verlieren.
@@ -251,8 +257,9 @@ Hauptmenü
 ├── Stationen
 │   ├── [Liste]              ← Discovery + Identify‑Blink
 │   ├── Neue Station         ← SETUP_BEGIN, warte auf Trigger‑Bestätigung
-│   ├── ID‑Konflikte prüfen  ← markiert doppelte station_id in Liste
-│   └── Sound testen         ← Station auswählen, Sound auswählen, abspielen
+│   ├── Sound testen         ← Station auswählen, Sound auswählen, abspielen
+│   └── Selbsttest           ← Prusa‑artig: Sound/LEDs/Laser/IR/Trigger einzeln
+│                              oder „Alle testen", Ergebnis je Test (0xF0/0xF1)
 ├── Targets
 │   ├── [Liste]              ← Discovery + Identify‑Blink
 │   └── Letztes Ziel         ← Komfort: erneut das zuletzt editierte Target
