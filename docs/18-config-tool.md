@@ -299,7 +299,8 @@ Hauptmenü
 │ ID         : ▶02◀          │  ← Cursor auf Feld, ◀▶ = im Wert‑Edit
 │ Volume     :  80 %         │
 │ Setup‑Sound:  13           │
-│                            │
+│ LED bereit :  G            │  ← Stab‑Farbe „schussbereit"
+│ LED aktiv  :  R            │  ← Stab‑Farbe „beschäftigt" (Audio spielt)
 │ Sound testen >             │
 │ Speichern    ⏎             │
 └────────────────────────────┘
@@ -307,6 +308,10 @@ Hauptmenü
 
 - Cursor `▶ ◀` markiert ein Feld; Encoder‑Push wechselt in den Wert‑Edit‑Modus
   (Cursor wird `▶02◀`), erneut Push übernimmt.
+- `LED bereit`/`LED aktiv`: Kanal‑Maske der SK6812‑RGBW‑Dies, Anzeige als
+  Buchstaben der aktiven Kanäle (`R`, `RG`, `RW`, … `RGBW`). Encoder‑Drehen
+  läuft durch alle 15 Kombinationen (Bitmaske 1–15, bit0 = R … bit3 = W).
+  Blob‑Offsets 3/4, siehe Doc 12 § 3.6.2 (ergänzt 2026‑07‑11).
 - `Speichern ⏎` schreibt per `CFG_WRITE` und wartet auf `CFG_ACK`.
 
 ### 5.3 OLED‑Skizze: Edit‑Ansicht „Target"

@@ -408,7 +408,16 @@ muss nicht zusätzlich im Payload mitfahren.
 | 0 | `station_id` | uint8 | 1 | 1..99, im NVS persistiert |
 | 1 | `volume_pct` | uint8 | 80 | 0..100, Software‑Skalierung der I²S‑Samples |
 | 2 | `default_setup_sound` | uint8 | 13 | Sound‑Index, beim Trigger im Setup‑Mode zur Bestätigung gespielt |
-| 3..15 | reserved | – | 0 | für künftige Felder, Sender setzt 0 |
+| 3 | `led_ready` | uint8 | 0x02 (Grün) | Stab‑Statusfarbe „schussbereit", LED‑Maske (ergänzt 2026‑07‑11) |
+| 4 | `led_busy` | uint8 | 0x01 (Rot) | Stab‑Statusfarbe „beschäftigt" (Audio spielt), LED‑Maske |
+| 5..15 | reserved | – | 0 | für künftige Felder, Sender setzt 0 |
+
+**LED‑Maske:** Kanal‑Bitmaske der SK6812‑RGBW‑Dies – bit0 = R, bit1 = G,
+bit2 = B, bit3 = W; gültig sind alle 15 nicht‑leeren Kombinationen (1–15).
+0 = „Feld nicht gesetzt" (Blob einer Alt‑Firmware) → Empfänger nimmt den
+Default. Stab‑LED‑Priorität in der Station: Identify‑Blink (weiß) >
+Setup‑Modus (lila) > `led_busy` > `led_ready`; der RGBW‑Boot‑Sichttest
+beim Einschalten bleibt davon unberührt.
 
 #### 3.6.3 Target‑Config‑Blob (`CFG_WRITE` mit `device_type=2`)
 
