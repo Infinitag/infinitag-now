@@ -363,7 +363,10 @@ Tobias    Config‑Box           Stationen
   │ OLED: "Station 03 gesetzt"    │
 ```
 
-Timeout 60 s (im `SETUP_BEGIN`‑Payload). Während der Setup‑Zeit lassen
+Timeout 60 s (im `SETUP_BEGIN`‑Payload). **Präzisiert 2026‑07‑11:** Die zu
+vergebende ID wählt die Config‑Box vor dem Broadcast (Encoder‑Drehen im
+Setup‑Screen, Vorschlag = höchste bekannte Stations‑ID + 1) und schickt sie
+im Header‑Feld `station_id` mit; die Station persistiert genau diese ID. Während der Setup‑Zeit lassen
 sich auch weitere Felder vorgeben (Volume, Default‑Setup‑Sound) und werden
 in der Trigger‑Bestätigung mitgeschickt – die Station übernimmt dann alle
 Werte auf einmal.

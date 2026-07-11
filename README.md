@@ -19,7 +19,7 @@ Infrastruktur, Peer-to-Peer-Funk via ESP-NOW.
 | [`infinitag-now-core`](https://github.com/Infinitag/infinitag-now-core) | Gemeinsame ESP-NOW-Protokoll-Lib `InfinitagNow` + `PROTOCOL.md` |
 | [`infinitag-now-config`](https://github.com/Infinitag/infinitag-now-config) | Config-Box: Handheld-Konfigurator (ESP32-C3 + OLED + Encoder) |
 | `infinitag-now-target` | Target-Firmware (geplant, beim ESP-NOW-Umbau) |
-| `infinitag-now-station` | Station-V2-Firmware (geplant) |
+| [`infinitag-now-station`](https://github.com/Infinitag/infinitag-now-station) | Station-V2-Firmware: Bring-up-Sketch + ESP-NOW-Gerätelogik |
 
 ## Doku
 

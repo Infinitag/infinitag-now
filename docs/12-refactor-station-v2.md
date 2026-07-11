@@ -366,7 +366,7 @@ anderer ESP‑NOW‑Sender mitfunkt.
 | 0x02 | `DISCOVER_REPLY` | Station / Target | Config‑Box | Unicast an Absender | siehe 3.6.1 |
 | 0x03 | `IDENTIFY` | Config‑Box | adressiertes Gerät | Unicast | `payload[0]` = Dauer in 100 ms (Default 7 = 700 ms) |
 | 0x10 | `HIT_REPORT` | Target | Stationen | Broadcast | `payload[0]` = `sound_id` (Absender‑MAC kommt ohnehin im ESP‑NOW‑recv‑Callback mit) |
-| 0x20 | `SETUP_BEGIN` | Config‑Box | alle Stationen | Broadcast | `payload[0]` = Timeout in Sekunden (Default 60) |
+| 0x20 | `SETUP_BEGIN` | Config‑Box | alle Stationen | Broadcast | `payload[0]` = Timeout in Sekunden (Default 60); Header‑`station_id` = zu vergebende ID, 0 = aktuelle behalten (präzisiert 2026‑07‑11) |
 | 0x21 | `SETUP_TAKE` | Station | alle | Broadcast | `payload[0]` = neue `station_id` (Absender‑MAC kommt aus dem ESP‑NOW‑recv‑Callback) |
 | 0x30 | `CFG_WRITE` | Config‑Box | Station oder Target | Unicast | siehe 3.6.2 / 3.6.3 |
 | 0x31 | `CFG_ACK` | Station / Target | Config‑Box | Unicast | `payload[0]` = Status (0 = OK, 1 = NACK Persistierung, 2 = NACK Validierung) |
