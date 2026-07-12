@@ -50,6 +50,12 @@ Entwicklung erhalten.
 
 - Quelle der Wahrheit bleiben die GitHub-Releases der drei Geräte-Repos
   (Assets `infinitag-<typ>-vX.Y.Z.bin`, seit v0.2.1 etabliert).
+- **CRC32-Beilage (seit 0.3.2):** `release.sh` legt jedem Release
+  zusätzlich `<asset>.bin.crc32` bei (Inhalt: `<CRC32-hex> <größe>`).
+  Die Box lädt den Sidecar beim Geräte-Image-Download mit und
+  verifiziert CRC + Größe des gespeicherten Images Ende-zu-Ende
+  (eine automatische Wiederholung bei Abweichung). Releases ohne
+  Sidecar laufen als „unverifiziert" durch (Log-Hinweis).
 - Abruf: `GET api.github.com/repos/Infinitag/<repo>/releases/latest`
   (Tag = Version) → `browser_download_url` des `.bin`-Assets →
   HTTPS-Download (folgt Redirect auf `objects.githubusercontent.com`).
