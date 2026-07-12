@@ -39,7 +39,8 @@ erreicht.
 | Gehäuse | 3D‑Druck‑Box, OLED‑Fenster + Encoder‑Achse + 4 Drucktasten an der Frontplatte, USB‑C an der Rückseite | offen, CAD nach Lochraster |
 | GPIO‑Plan | siehe Abschnitt 4 | ✅ Konzept, im Lochraster zu verifizieren |
 | Erster Hardware‑Schritt | Lochraster‑Prototyp auf Steckbrett (C3 Super Mini + OLED + Encoder lose verkabelt) | offen, nach Bestellung |
-| **Firmware V0.1** | PlatformIO‑Projekt in `/Volumes/basteln/Infinitag/firmware/config-box/` – Kern ohne Web‑UI (Discovery, Identify, Editor, Setup‑Flow, Sound‑Test, Live‑Monitor). Protokoll‑Lib `InfinitagNow` mit Unit‑Tests, für spätere Wiederverwendung in Station/Target | ✅ geschrieben 2026‑07‑08, ungetestet auf HW |
+| **Firmware V0.1** | PlatformIO‑Projekt in `/Volumes/basteln/Infinitag/firmware/config-box/` – Kern ohne Web‑UI (Discovery, Identify, Editor, Setup‑Flow, Sound‑Test, Live‑Monitor). Protokoll‑Lib `InfinitagNow` mit Unit‑Tests, für spätere Wiederverwendung in Station/Target | ✅ geschrieben 2026‑07‑08, ungetestet auf HW; Arbeitsstand seither im Repo `infinitag-now-config` |
+| **Protokoll v0x02 + OTA (FW 0.2.0)** | IDs komplett gestrichen (MAC = Identität, Setup‑Flow entfallen), Firmware‑Update per SoftAP (`WebUpdateService` im Core‑Repo, `UPDATE_BEGIN` 0xF2 für Geräte, Tools → Update‑Modus für die Box), Versions‑Check `^` in den Listen | ✅ umgesetzt 2026‑07‑12 (Core `v2.0.0`), auf HW zu verifizieren |
 
 ---
 
@@ -256,93 +257,107 @@ Listen (6 Zeilen × 21 Zeichen sichtbar) und `u8g2_font_helvB10_tf` für
 wählen, danach öffnet sich dessen Geräte‑Menü mit allen Aktionen
 (Prusa‑Logik). Die früheren aktions‑zentrierten Untermenüs entfallen.
 
+**Seit Protokoll v0x02 (2026‑07‑12):** Geräte heißen in allen Listen nach
+ihrem MAC‑Suffix (z. B. `220AAC`), der Eintrag „Neue Station (Stab)" und
+der ganze Setup‑Flow sind entfallen. Neu: Firmware‑Update pro Gerät und
+für die Box selbst (§ 6.1) sowie der Versions‑Check `^` in den Listen.
+
 ```
 Hauptmenü
 ├── Stationen                ← Geräteliste: < Zurück / Neu suchen /
-│   │                          Neue Station (Stab) / St.01, St.02, …
+│   │                          220AAC, 4B11FE, … (MAC‑Suffixe)
 │   └── Station wählen       ← Identify‑Blink folgt dem Cursor UND bleibt
 │       │                      im Geräte‑Menü aktiv („wen konfiguriere ich?")
-│       ├── Konfigurieren    ← Editor (ID, Volume, Setup‑Sound) + Speichern
+│       │                      Titel zeigt FW‑Version: "Station 220AAC v0.2.0"
+│       ├── Konfigurieren    ← Editor (Volume, LED bereit, LED aktiv)
 │       ├── Sound testen     ← Sound wählen + abspielen (0x32)
-│       └── Selbsttest       ← Prusa‑artig: Sound/LEDs/Laser/IR/Trigger
-│                              einzeln oder „Alle testen" (0xF0/0xF1)
-├── Targets                  ← Geräteliste: < Zurück / Neu suchen / T.01, …
-│   └── Target wählen        → Konfigurieren (Editor)
+│       ├── Selbsttest       ← Prusa‑artig: Sound/LEDs/Laser/IR/Trigger
+│       │                      einzeln oder „Alle testen" (0xF0/0xF1)
+│       └── Update (OTA)     ← schickt UPDATE_BEGIN, Gerät öffnet SoftAP (§ 6.1)
+├── Targets                  ← Geräteliste: < Zurück / Neu suchen / MAC‑Suffixe
+│   └── Target wählen        → Konfigurieren / Update (OTA)
 ├── Live‑Monitor             ← zeigt eingehende HIT_REPORTs als Tickerzeile
-├── Web‑UI                   ← SoftAP an/aus, zeigt IP + QR‑Code
+├── Web‑UI                   ← SoftAP an/aus, zeigt IP + QR‑Code (V0.2)
 └── Tools
-    ├── ESP‑NOW Sniffer      ← alle Pakete loggen (Debug)
-    ├── Firmware‑Info        ← eigene Version, MAC, freier Heap
-    └── OTA‑Update           ← lädt fw.bin von SoftAP‑Client per HTTP
+    ├── Firmware‑Info        ← eigene Version, MAC, freier Heap, VBAT
+    └── Update‑Modus         ← eigener SoftAP‑Updater der Config‑Box (§ 6.1)
 ```
+
+(Der früher angedachte ESP‑NOW‑Sniffer bleibt offener Punkt, § 12.)
 
 ### 5.1 OLED‑Skizze: Listen‑Ansicht „Stationen"
 
 ```
 ┌─[Stationen]─────────────[3]─┐
-│ ▶01  Station-A      -42dBm │  ← Cursor: blinkt Station-A
-│  02  Station-B      -68dBm │
-│  03  Station-C      -55dBm │
-│  ??  ungesetzt      -38dBm │  ← ID=0, frisch geflasht
-│  K3=Blink an  K4=Edit       │
+│ < Zurueck                   │
+│  Neu suchen                 │
+│ ▶ 220AAC  -42dBm            │  ← Cursor: blinkt diese Station
+│  ^4B11FE  -68dBm            │  ← ^ = Firmware älter als die neueste
+│   89AC01  -55dBm            │     im Netz gesehene (gleicher Typ)
 └─────────────────────────────┘
 ```
 
 - `[3]` rechts oben = Anzahl gefundener Geräte
-- `??` = `station_id == 0`, also nicht konfiguriert
+- Geräte heißen nach ihrem MAC‑Suffix (letzte 3 Byte); physische Zuordnung
+  übers Identify‑Blinken (§ 7)
+- `^` = **Versions‑Check** (seit 2026‑07‑12): dieses Gerät hat eine ältere
+  Firmware als die höchste in der Liste gesehene Version desselben Typs
+  („Nachzügler‑Melder", Stufe 1 – keine Protokolländerung nötig). Die
+  exakte Version steht im Titel des Geräte‑Menüs.
 - RSSI rechts erleichtert „welche Box ist nah dran?"
 
 ### 5.2 OLED‑Skizze: Edit‑Ansicht „Station"
 
 ```
-┌─[Station-A AABBCC]─────────┐
-│ ID         : ▶02◀          │  ← Cursor auf Feld, ◀▶ = im Wert‑Edit
-│ Volume     :  80 %         │
-│ Setup‑Sound:  13           │
+┌─[Station 220AAC]───────────┐
+│ Volume     : ▶80 %◀        │  ← Cursor auf Feld, ◀▶ = im Wert‑Edit
 │ LED bereit :  G            │  ← Stab‑Farbe „schussbereit"
 │ LED aktiv  :  R            │  ← Stab‑Farbe „beschäftigt" (Audio spielt)
-│ Sound testen >             │
-│ Speichern    ⏎             │
+│ [Speichern]                │
+│ < Zurueck                  │
 └────────────────────────────┘
 ```
 
-- Cursor `▶ ◀` markiert ein Feld; Encoder‑Push wechselt in den Wert‑Edit‑Modus
-  (Cursor wird `▶02◀`), erneut Push übernimmt.
+- Cursor `▶ ◀` markiert ein Feld; Encoder‑Push wechselt in den Wert‑Edit‑Modus,
+  erneut Push übernimmt. Kein ID‑Feld mehr (v0x02, MAC ist die Identität);
+  `Setup‑Sound` starb mit dem Setup‑Flow.
 - `LED bereit`/`LED aktiv`: Kanal‑Maske der SK6812‑RGBW‑Dies, Anzeige als
   Buchstaben der aktiven Kanäle (`R`, `RG`, `RW`, … `RGBW`). Encoder‑Drehen
   läuft durch alle 15 Kombinationen (Bitmaske 1–15, bit0 = R … bit3 = W).
-  Blob‑Offsets 3/4, siehe Doc 12 § 3.6.2 (ergänzt 2026‑07‑11).
+  Blob‑Offsets 1/2, siehe Doc 12 § 3.6.2.
 - `Speichern ⏎` schreibt per `CFG_WRITE` und wartet auf `CFG_ACK`.
 
 ### 5.3 OLED‑Skizze: Edit‑Ansicht „Target"
 
 ```
-┌─[Target-NEU 11FF22]────────┐
-│ Target‑ID  :  03           │
-│ Station‑ID :  02           │
-│ Sound      :  06 Schrei    │  ← Sound‑Klartext nur per Web‑UI; OLED Nummer
+┌─[Target 11FF22]────────────┐
+│ Station    :  220AAC       │  ← Auswahl aus der Discovery‑Liste (MAC)
+│ Sound      :  06           │  ← Sound‑Klartext nur per Web‑UI; OLED Nummer
 │ Hit‑Time   : 10000 ms      │
 │ Cooldown   :  2000 ms      │
 │ SW‑Anim    :  0 (an/aus)   │
 │ SW‑Kanäle  : ●○● 1,3       │
-│ Speichern    ⏎             │
+│ [Speichern]                │
 └────────────────────────────┘
 ```
 
-`SW‑Kanäle`‑Anzeige: drei runde Symbole für SW1 (potentialfrei), SW_5V,
-SW_3V3, `●` = aktiv, `○` = inaktiv. Encoder‑Drehen in dem Feld toggelt
-die drei Kanäle als 3‑Bit‑Wert (8 Kombinationen).
+- `Station`: statt einer ID wählt man die Ziel‑Station **aus der Liste der
+  zuletzt gefundenen Stationen** (Anzeige = MAC‑Suffix); die gespeicherte
+  MAC wird zusätzlich angeboten, falls sie gerade nicht im Netz ist.
+  `--` = noch keine Station gewählt/gefunden (Treffer verpuffen dann).
+- `SW‑Kanäle`‑Anzeige: drei runde Symbole für SW1 (potentialfrei), SW_5V,
+  SW_3V3, `●` = aktiv, `○` = inaktiv. Encoder‑Drehen in dem Feld toggelt
+  die drei Kanäle als 3‑Bit‑Wert (8 Kombinationen).
 
 ### 5.4 OLED‑Skizze: Live‑Monitor
 
 ```
-┌─[Live‑Monitor]─────────────┐
-│ 21:14:03 T07→S02 sound=06  │
-│ 21:14:05 T03→S02 sound=02  │
-│ 21:14:08 T07→S02 sound=06  │
-│ 21:14:11 T05→S01 sound=11  │
-│                            │
-│ Filter: alle  K3=Filter    │
+┌─[Live‑Monitor]─────────[4]─┐
+│   3s 11FF22>220AAC 06      │  ← Alter, Target>Station (MAC), Sound
+│   5s 33AB01>220AAC 02      │
+│   8s 11FF22>220AAC 06      │
+│  11s 55EF10>4B11FE 11      │
+│ Push = Zurueck             │
 └────────────────────────────┘
 ```
 
@@ -358,35 +373,53 @@ die drei Kanäle als 3‑Bit‑Wert (8 Kombinationen).
 Drei Wege, alle aus dem Hauptmenü erreichbar. Die ESP‑NOW‑Pakete folgen
 [`12-refactor-station-v2.md`](12-refactor-station-v2.md) § 3.4–3.7.
 
-### 6.1 Flow A: Stations‑ID per Stab‑Trigger setzen
+### 6.1 Flow A: Firmware‑Update über SoftAP (seit 2026‑07‑12)
 
-Vorteil: physisch eindeutig, kein „welche der drei Boxen ist's gleich".
+Ersetzt den historischen Setup‑Flow (Stations‑ID per Stab‑Trigger), der
+mit Protokoll v0x02 ersatzlos entfallen ist – ohne IDs gibt es nichts
+zuzuweisen, eine neue Station funktioniert ab dem Einschalten. (Alter
+Flow in der Git‑Historie dieses Dokuments.)
+
+**A1 – Gerät aktualisieren (Station/Target, kein Display nötig):**
 
 ```
-Tobias    Config‑Box           Stationen
-  │            │                   │
-  │ "Neue     │ SETUP_BEGIN        │
-  │ Station"  ├──────Broadcast─────►
-  │           │                    │ alle: Status‑LED + Stab‑LEDs lila
-  │           │                    │ Trigger umgedeutet auf "Bestätigen"
-  │           │                    │
-  │ geht zur Wunsch‑Station        │
-  │ und drückt Trigger             │
-  │           │                    │
-  │           │ SETUP_TAKE(mac=…, id=03)
-  │           ◄──────Broadcast─────┤
-  │           │                    │ andere: SETUP_TAKE gesehen → zurück IDLE
-  │           │                    │ gewählte: id persistieren, 3× Cyan
-  │ OLED: "Station 03 gesetzt"    │
+Tobias    Config‑Box                 Gerät
+  │ Geräte‑Menü │ UPDATE_BEGIN(5min)    │
+  │ "Update     ├──Unicast──────────────►
+  │ (OTA)"      │ UPDATE_ACK            │
+  │             ◄──Unicast──────────────┤
+  │             │                       │ ESP‑NOW aus, SoftAP an:
+  │ OLED zeigt: │                       │ "infinitag-sta-220AAC"
+  │ AP‑Name +   │                       │ Stab‑LED pulsiert blau
+  │ 192.168.4.1 │                       │ (Station zeigt es auch am OLED)
+  │             │                       │
+  │ verbindet Laptop/Handy mit dem AP,  │
+  │ lädt firmware.bin auf http://192.168.4.1 hoch
+  │             │                       │ Update.h → inaktiver OTA‑Slot,
+  │             │                       │ CRC‑Check → Boot‑Slot wechselt
+  │             │                       │ → Reboot in neue Firmware
+  │ danach: "Neu suchen" → Version im Titel/^‑Check prüfen
 ```
 
-Timeout 60 s (im `SETUP_BEGIN`‑Payload). **Präzisiert 2026‑07‑11:** Die zu
-vergebende ID wählt die Config‑Box vor dem Broadcast (Encoder‑Drehen im
-Setup‑Screen, Vorschlag = höchste bekannte Stations‑ID + 1) und schickt sie
-im Header‑Feld `station_id` mit; die Station persistiert genau diese ID. Während der Setup‑Zeit lassen
-sich auch weitere Felder vorgeben (Volume, Default‑Setup‑Sound) und werden
-in der Trigger‑Bestätigung mitgeschickt – die Station übernimmt dann alle
-Werte auf einmal.
+- Timeout (Default 5 min, `payload[0]`): ohne Upload rebootet das Gerät
+  zurück in die alte Firmware – nichts bleibt im Update-Modus hängen.
+- Abgebrochener Upload kann nicht booten (Boot‑Slot wechselt erst nach
+  vollständigem, validiertem Empfang). „Neue Firmware bootet, ist aber
+  kaputt" fängt später der IDF‑Rollback ab (offener Punkt, § 12).
+- Der Upload‑Server ist das geteilte Modul `WebUpdateService` aus dem
+  Core‑Repo – identisch für Station, Target und Config‑Box.
+
+**A2 – Config‑Box selbst aktualisieren:** Tools → „Update‑Modus". Gleicher
+Mechanismus lokal (AP `infinitag-cfg-XXXXXX`), vorher **Batterie‑Check**
+(unter 3,6 V Akku wird verweigert; < 3,0 V gemessen = USB‑Betrieb = OK).
+Verlassen des Modus = Reboot (ESP‑NOW ist abgebaut).
+
+**A3 – Versions‑Check:** jedes `DISCOVER_REPLY` enthält `fw_version`.
+Die Liste markiert Geräte, die älter sind als die höchste gesehene
+Version ihres Typs, mit `^` (§ 5.1); die exakte Version steht im Titel
+des Geräte‑Menüs. Konvention: **jeder Flash‑Stand, der rausgeht, zählt
+die Patch‑Nummer hoch** (`STATION_FW_*` in `NowStation.h`, `cfg::FW_*`
+in `Config.h` der Box), sonst zeigt der Check Gleichstand, wo keiner ist.
 
 ### 6.2 Flow B: Geräte über Liste auswählen + editieren
 
@@ -498,29 +531,25 @@ INIT (OLED‑Splash, ESP‑NOW init, Broadcast‑Peer)
  ▼
 MENU_MAIN
  │
- ├──► MENU_STATIONS ──► STATION_LIST ──► STATION_EDIT ──► CFG_WRITE ──► back
+ ├──► STATION_LIST ──► DEVICE_MENU ──► EDIT ──► CFG_WRITE ──► back
+ │                        │  ├──► SOUND_TEST / SELF_TEST
+ │                        │  └──► DEV_UPDATE (UPDATE_BEGIN → AP‑Info) ──► back
  │
- ├──► STATION_SETUP_MODE (SETUP_BEGIN aktiv)
- │      │
- │      ├──(SETUP_TAKE empfangen)──► STATION_SETUP_DONE ──► back
- │      └──(Timeout 60 s)──► back
- │
- ├──► MENU_TARGETS ──► TARGET_LIST ──► TARGET_EDIT ──► CFG_WRITE ──► back
+ ├──► TARGET_LIST ──► DEVICE_MENU ──► EDIT / DEV_UPDATE
  │
  ├──► LIVE_MONITOR (HIT_REPORT‑Stream auf OLED)
  │
- ├──► WEB_UI_ON (SoftAP gestartet, IP + QR auf OLED)
+ ├──► WEB_UI (Platzhalter, V0.2)
  │
- └──► TOOLS (Sniffer, Firmware‑Info, OTA)
+ └──► TOOLS ──► FIRMWARE_INFO
+         └───► SELF_UPDATE (eigener SoftAP‑Updater; Ausgang nur per Reboot)
 ```
 
-In den Zuständen `STATION_LIST` und `TARGET_LIST` läuft im Hintergrund
-ein 500‑ms‑Timer, der `IDENTIFY` an den Cursor‑Eintrag sendet (sofern
-Identify nicht via K3 deaktiviert wurde).
-
-In `STATION_SETUP_MODE` läuft ein 5‑s‑Timer, der `SETUP_BEGIN`
-nachschickt – damit eine Station, die etwas später eingeschaltet wird,
-auch noch in den Setup‑Modus geht.
+In den Zuständen `STATION_LIST`/`TARGET_LIST` (Cursor auf Geräte‑Zeile)
+und im `DEVICE_MENU` läuft im Hintergrund ein 500‑ms‑Timer, der
+`IDENTIFY` an das Gerät sendet (sofern Identify nicht via K3
+deaktiviert wurde). Der frühere `STATION_SETUP_MODE` ist mit dem
+Setup‑Flow entfallen (v0x02).
 
 ---
 
@@ -678,6 +707,18 @@ Lochraster.
       RC‑Glied 10 kΩ / 100 nF an A/B nachrüsten.
 - [ ] **3D‑CAD** Gehäuse, erst nach Lochraster wenn klar ist, welche
       Maße final sind.
+- [ ] **IDF‑App‑Rollback aktivieren** (nach erstem OTA‑Praxistest): neue
+      Firmware muss sich nach dem Boot selbst als „gut" markieren
+      (`esp_ota_mark_app_valid_cancel_rollback()`), sonst fällt der
+      nächste Reset auf den alten Slot zurück. Fängt „bootet, ist aber
+      kaputt" ab; braucht `CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE`.
+- [ ] **ESP‑NOW‑OTA („Update‑Maultier", Variante B)**: Firmware‑Image auf
+      der Config‑Box zwischenspeichern und per Funk in 240‑Byte‑Chunks an
+      Geräte schieben – erst angehen, wenn das AP‑Hüpfen bei vielen
+      Targets wirklich nervt. Soll‑Version dann aus dem App‑Descriptor
+      (`esp_app_desc_t`) des gespeicherten Images lesen (Stufe 2 des
+      Versions‑Checks).
+- [ ] **ESP‑NOW‑Sniffer** (Tools‑Menü) – aus V0.1 offen.
 
 ---
 
@@ -686,8 +727,8 @@ Lochraster.
 - [`12-refactor-station-v2.md`](12-refactor-station-v2.md) – Station V2,
   insbesondere § 3 (ESP‑NOW‑Protokoll, Paket‑Format) und § 7 (GPIO‑Plan
   als Vorbild)
-- [`13-refactor-wand-v3.md`](13-refactor-wand-v3.md) – Wand V3, relevant
-  für den Trigger‑Bestätigungs‑Flow (Flow A in Abschnitt 6.1)
+- [`13-refactor-wand-v3.md`](13-refactor-wand-v3.md) – Wand V3 (der
+  frühere Trigger‑Bestätigungs‑Flow ist mit Protokoll v0x02 entfallen)
 - [`08-software-target.md`](08-software-target.md) – heutige
   Target‑Firmware (WiFiManager, fehlender Cooldown)
 - [`11-offene-punkte.md`](11-offene-punkte.md) – Punkte zur Cooldown‑

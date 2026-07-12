@@ -253,38 +253,48 @@ geladen ist.
 
 ## 3. Kommunikation: ESP‑NOW
 
+> **Protokoll v0x02 (2026‑07‑12):** Die anwender‑vergebenen IDs
+> (`station_id`/`target_id`) und der komplette Setup‑Flow
+> (`SETUP_BEGIN`/`SETUP_TAKE`) sind **entfallen** – die eFuse‑MAC ist die
+> einzige Identität, Menschen unterscheiden Geräte über das MAC‑Suffix
+> (letzte 3 Byte) plus Identify‑Blinken. Neu: `UPDATE_BEGIN`/`UPDATE_ACK`
+> für den SoftAP‑Firmware‑Update‑Modus. Verbindliche Spezifikation:
+> **`PROTOCOL.md` im Core‑Repo** (Tag `v2.0.0`). Die Abschnitte 3.1–3.7
+> sind auf v0x02 aktualisiert; die V1‑Herleitung steht in der Git‑Historie.
+
 ### 3.1 Topologie
 
 Drei Geräte‑Typen im ESP‑NOW‑Netz, alle gleichrangig auf der MAC‑Layer:
 
 | Typ | Anzahl | Sendet | Empfängt |
 |---|---|---|---|
-| **Station** | 1..N | Treffer‑Bestätigungen (optional), `SETUP_TAKE`, `DISCOVER_REPLY`, `CFG_ACK` | `HIT_REPORT`, `SETUP_BEGIN`, `DISCOVER_REQ`, `CFG_WRITE`, `IDENTIFY` |
-| **Target** | 1..N | `HIT_REPORT` (Treffer), `DISCOVER_REPLY`, `CFG_ACK` | `DISCOVER_REQ`, `CFG_WRITE`, `IDENTIFY`, `SETUP_BEGIN` |
-| **Config‑Box** | 0..1 | `DISCOVER_REQ`, `IDENTIFY`, `CFG_WRITE`, `SETUP_BEGIN` | `DISCOVER_REPLY`, `CFG_ACK`, `SETUP_TAKE`, `HIT_REPORT` (Monitor) |
+| **Station** | 1..N | `DISCOVER_REPLY`, `CFG_ACK`, `DEBUG_RESULT`, `UPDATE_ACK` | `HIT_REPORT`, `DISCOVER_REQ`, `CFG_WRITE`, `IDENTIFY`, `CFG_TEST_SOUND`, `DEBUG_CMD`, `UPDATE_BEGIN` |
+| **Target** | 1..N | `HIT_REPORT` (Treffer), `DISCOVER_REPLY`, `CFG_ACK`, `UPDATE_ACK` | `DISCOVER_REQ`, `CFG_WRITE`, `IDENTIFY`, `UPDATE_BEGIN` |
+| **Config‑Box** | 0..1 | `DISCOVER_REQ`, `IDENTIFY`, `CFG_WRITE`, `CFG_TEST_SOUND`, `DEBUG_CMD`, `UPDATE_BEGIN` | `DISCOVER_REPLY`, `CFG_ACK`, `DEBUG_RESULT`, `UPDATE_ACK`, `HIT_REPORT` (Monitor) |
 
 Identifikation:
 
-- Jedes Gerät identifiziert sich primär über seine **48‑Bit MAC‑Adresse** aus
-  dem eFuse (`esp_read_mac()` / `WiFi.macAddress()`). Die MAC ist weltweit
-  eindeutig, unveränderbar und gleichzeitig die ESP‑NOW‑Adresse → kein
-  Pairing‑Schritt nötig, jedes Gerät kann von Geburt an angesprochen werden.
-- Die **anwenderlesbare ID** (`station_id`, `target_id`, jeweils 1..99) wird
-  im NVS gespeichert und über die Config‑Box gesetzt. Ein frisch geflashtes
-  Gerät meldet sich mit ID = 0 („ungesetzt") und bittet damit visuell um
-  Konfiguration.
+- Jedes Gerät identifiziert sich **ausschließlich** über seine **48‑Bit
+  MAC‑Adresse** aus dem eFuse (`esp_read_mac()` / `WiFi.macAddress()`).
+  Die MAC ist weltweit eindeutig, unveränderbar und gleichzeitig die
+  ESP‑NOW‑Adresse → kein Pairing‑Schritt, kein Setup‑Flow, jedes Gerät
+  funktioniert ab dem Auspacken.
+- Anzeige für Menschen: das **MAC‑Suffix** (letzte 3 Byte als Hex, z. B.
+  `220AAC`) überall in der Config‑Box‑UI, plus Identify‑Blinken für die
+  physische Zuordnung. Beim Gerätetausch (Station stirbt) müssen die
+  betroffenen Targets einmal auf die neue Station‑MAC umgezeigt werden
+  (Target‑Editor → Station aus Liste wählen → Speichern).
 - Stationen und Targets sind **stateless gegenüber der Config‑Box**: sie
   kennen die Config‑Box nicht und merken sie sich nicht. Jeder Discovery‑
   Zyklus baut die Liste neu auf.
 
 Adressierung:
 
-- **Broadcast (FF:FF:FF:FF:FF:FF)** für `DISCOVER_REQ`, `SETUP_BEGIN`,
-  `SETUP_TAKE`, `HIT_REPORT`. Damit erreichen wir alle Geräte ohne vorherige
-  Peer‑Registrierung.
-- **Unicast (an MAC)** für `IDENTIFY`, `CFG_WRITE`, `CFG_ACK`,
-  `DISCOVER_REPLY`. Empfänger‑MAC ist bekannt (entweder aus eigener Tabelle
-  beim Antworten oder aus dem Discovery‑Reply beim Schreiben).
+- **Broadcast (FF:FF:FF:FF:FF:FF)** für `DISCOVER_REQ` und `HIT_REPORT`.
+  Damit erreichen wir alle Geräte ohne vorherige Peer‑Registrierung.
+- **Unicast (an MAC)** für alles andere. Empfänger‑MAC ist bekannt
+  (entweder aus eigener Tabelle beim Antworten oder aus dem
+  Discovery‑Reply beim Schreiben).
 - Vor jedem Unicast muss der Sender den Peer per `esp_now_add_peer()`
   registrieren. Eleganter Workaround: bei jedem eingehenden Paket den
   Absender‑Peer flüchtig hinzufügen (LRU‑Cache mit z. B. 20 Slots), beim
@@ -292,12 +302,11 @@ Adressierung:
 
 Filterung im Empfänger:
 
-- Stationen verarbeiten `HIT_REPORT` nur, wenn `station_id` im Paket der
-  eigenen ID entspricht. Targets ignorieren `HIT_REPORT` komplett.
-- Im **Setup‑Mode** ändert sich die Bedeutung des Trigger‑Eingangs an der
-  Station: er ist Bestätigungstaster, nicht Schuss‑Auslöser. Den
-  vollständigen Flow (`SETUP_BEGIN` → Stab‑Trigger → `SETUP_TAKE`)
-  beschreibt [`18-config-tool.md`](18-config-tool.md) § 6.1.
+- Stationen verarbeiten `HIT_REPORT` nur, wenn die **Ziel‑Station‑MAC im
+  Payload** (`payload[0..5]`) der eigenen MAC entspricht. Targets
+  ignorieren `HIT_REPORT` komplett. `HIT_REPORT` bleibt bewusst
+  Broadcast (statt Unicast an die Station), damit der Live‑Monitor der
+  Config‑Box alle Treffer mitlesen kann.
 
 ### 3.2 Vorteile gegenüber HTTP
 
@@ -324,34 +333,32 @@ WiFi.setSleep(WIFI_PS_NONE);
 
 Strom‑Penalty: ~80 mA dauerhaft. Bei 12 V Outdoor‑Netzteil egal.
 
-### 3.4 Paket‑Format (V1)
+### 3.4 Paket‑Format (v0x02)
 
-Festgeschrieben 2026‑05‑18 zusammen mit dem Config‑Tool‑Konzept
-([`18-config-tool.md`](18-config-tool.md)). Wichtig: alle Multi‑Byte‑Felder
-sind **little‑endian** (ESP32‑Native), die Struktur ist `__attribute__((packed))`
-ausgelegt, damit Sender und Empfänger byteweise gleich sind ohne
+V1 festgeschrieben 2026‑05‑18, **v0x02 seit 2026‑07‑12** (ID‑Felder
+entfernt). Wichtig: alle Multi‑Byte‑Felder sind **little‑endian**
+(ESP32‑Native), die Struktur ist `__attribute__((packed))` ausgelegt,
+damit Sender und Empfänger byteweise gleich sind ohne
 Padding‑Überraschungen.
 
 ```c
-// Infinitag ESP-NOW packet format, version 0x01
+// Infinitag ESP-NOW packet format, version 0x02
 // Fixed size: 36 bytes
 typedef struct __attribute__((packed)) {
-  uint8_t  version;        // 0x01
+  uint8_t  version;        // 0x02
   uint8_t  msg_type;       // siehe Tabelle 3.5
   uint8_t  device_type;    // 1 = STATION, 2 = TARGET, 3 = CONFIG_BOX, 0xFF = ANY
-  uint8_t  station_id;     // 1..99, 0 = ungesetzt / nicht relevant
-  uint8_t  target_id;      // 1..99, 0 = ungesetzt / nicht relevant
-  uint8_t  flags;          // bit0 = ACK_REQUIRED, bit1 = SETUP_MODE_ONLY, …
+  uint8_t  flags;          // bit0 = ACK_REQUIRED
   uint8_t  token;          // Zufallswert, Echo‑Schutz bei Discovery / IR‑Select
-  uint8_t  reserved;       // = 0, Padding auf 8 Byte Header
+  uint8_t  reserved[3];    // = 0, Padding auf 8 Byte Header
   uint8_t  payload[26];    // typabhängig, siehe Abschnitt 3.6
   uint16_t crc16;          // CRC‑16/CCITT‑FALSE über Bytes 0..33
 } infinitag_packet_t;
 ```
 
-`device_type` im Header ist redundant zu `station_id` vs. `target_id`, macht
-aber das Filtern auf Empfängerseite trivial (`if (pkt->device_type ==
-DEV_STATION) { … }`) ohne in den Payload zu schauen.
+Die Absender‑Identität ist die Quell‑MAC aus dem ESP‑NOW‑Layer‑2‑Header
+(kommt im `recv_cb` mit); `device_type` beschreibt das *Subjekt* der
+Nachricht und macht das Filtern auf Empfängerseite trivial.
 
 Der CRC ist nicht zwingend für Datenintegrität (ESP‑NOW hat schon eine
 Layer‑2‑CRC), aber er fängt **falsche Paket‑Versionen** und **fremde Pakete
@@ -365,22 +372,25 @@ anderer ESP‑NOW‑Sender mitfunkt.
 | 0x01 | `DISCOVER_REQ` | Config‑Box | alle (Filter `device_type`) | Broadcast | `payload[0]` = gewünschter `device_type` Filter |
 | 0x02 | `DISCOVER_REPLY` | Station / Target | Config‑Box | Unicast an Absender | siehe 3.6.1 |
 | 0x03 | `IDENTIFY` | Config‑Box | adressiertes Gerät | Unicast | `payload[0]` = Dauer in 100 ms (Default 7 = 700 ms) |
-| 0x10 | `HIT_REPORT` | Target | Stationen | Broadcast | `payload[0]` = `sound_id` (Absender‑MAC kommt ohnehin im ESP‑NOW‑recv‑Callback mit) |
-| 0x20 | `SETUP_BEGIN` | Config‑Box | alle Stationen | Broadcast | `payload[0]` = Timeout in Sekunden (Default 60); Header‑`station_id` = zu vergebende ID, 0 = aktuelle behalten (präzisiert 2026‑07‑11) |
-| 0x21 | `SETUP_TAKE` | Station | alle | Broadcast | `payload[0]` = neue `station_id` (Absender‑MAC kommt aus dem ESP‑NOW‑recv‑Callback) |
+| 0x10 | `HIT_REPORT` | Target | Stationen (+ Monitor) | Broadcast | `payload[0..5]` = Ziel‑Station‑MAC, `payload[6]` = `sound_id` (Absender‑MAC = Target kommt im ESP‑NOW‑recv‑Callback mit) |
 | 0x30 | `CFG_WRITE` | Config‑Box | Station oder Target | Unicast | siehe 3.6.2 / 3.6.3 |
 | 0x31 | `CFG_ACK` | Station / Target | Config‑Box | Unicast | `payload[0]` = Status (0 = OK, 1 = NACK Persistierung, 2 = NACK Validierung) |
 | 0x32 | `CFG_TEST_SOUND` | Config‑Box | Station | Unicast | `payload[0]` = `sound_id` – nur abspielen, **nicht** persistieren. Festgelegt 2026‑07‑08 (vorher offener Punkt in Doc 18 § 6.3) |
 | 0xC0 | `IR_SELECT_ECHO` | Target | Config‑Box | Broadcast | `payload[0]` = Token aus IR‑Frame (Echo‑Schutz). Reserviert/latent – siehe 3.7. |
 | 0xF0 | `DEBUG_CMD` | Config‑Box | Gerät | Unicast | Selbsttest: `payload[0]` = Test‑Nr. (1 Sound, 2 LEDs, 3 Laser, 4 IR‑Burst mit TSOP‑Selbstempfang, 5 Trigger‑Warten), `payload[1]` = Parameter. Neu 2026‑07‑11, Katalog in `PROTOCOL.md` (Core‑Repo) |
 | 0xF1 | `DEBUG_RESULT` | Gerät | Config‑Box | Unicast | `payload[0]` = Test‑Nr., `payload[1]` = 0 OK / 1 FAIL / 2 TIMEOUT / 3 UNSUPPORTED |
+| 0xF2 | `UPDATE_BEGIN` | Config‑Box | Gerät | Unicast | `payload[0]` = Timeout in Minuten (0 = Default 5). Gerät wechselt in den SoftAP‑Update‑Modus. Neu 2026‑07‑12 |
+| 0xF3 | `UPDATE_ACK` | Gerät | Config‑Box | Unicast | `payload[0]` = 0 (Gerät wechselt jetzt in den Update‑Modus) |
+
+Entfallen seit v0x02: `0x20 SETUP_BEGIN`, `0x21 SETUP_TAKE` (der ganze
+Setup‑Flow – ohne IDs gibt es nichts mehr zuzuweisen).
 
 Reservierte Bereiche:
 
 - `0x40..0x4F` – zukünftige Read‑Befehle, falls Discovery + Reply für Reads
   nicht reicht (z. B. Live‑Sensor‑Werte)
 - `0x80..0xBF` – zukünftige Telemetry / Heartbeats
-- `0xF0..0xFF` – Debug / OTA
+- `0xF4..0xFF` – Debug / OTA
 
 ### 3.6 Payload‑Layout pro Nachrichtentyp
 
@@ -405,12 +415,13 @@ muss nicht zusätzlich im Payload mitfahren.
 
 | Offset | Feld | Typ | Default | Bemerkung |
 |---|---|---|---|---|
-| 0 | `station_id` | uint8 | 1 | 1..99, im NVS persistiert |
-| 1 | `volume_pct` | uint8 | 80 | 0..100, Software‑Skalierung der I²S‑Samples |
-| 2 | `default_setup_sound` | uint8 | 13 | Sound‑Index, beim Trigger im Setup‑Mode zur Bestätigung gespielt |
-| 3 | `led_ready` | uint8 | 0x02 (Grün) | Stab‑Statusfarbe „schussbereit", LED‑Maske (ergänzt 2026‑07‑11) |
-| 4 | `led_busy` | uint8 | 0x01 (Rot) | Stab‑Statusfarbe „beschäftigt" (Audio spielt), LED‑Maske |
-| 5..15 | reserved | – | 0 | für künftige Felder, Sender setzt 0 |
+| 0 | `volume_pct` | uint8 | 80 | 0..100, Software‑Skalierung der I²S‑Samples |
+| 1 | `led_ready` | uint8 | 0x02 (Grün) | Stab‑Statusfarbe „schussbereit", LED‑Maske (ergänzt 2026‑07‑11) |
+| 2 | `led_busy` | uint8 | 0x01 (Rot) | Stab‑Statusfarbe „beschäftigt" (Audio spielt), LED‑Maske |
+| 3..15 | reserved | – | 0 | für künftige Felder, Sender setzt 0 |
+
+Seit v0x02 ohne `station_id` und ohne `default_setup_sound` (der
+Setup‑Bestätigungs‑Sound starb mit dem Setup‑Flow).
 
 **LED‑Maske:** Kanal‑Bitmaske der SK6812‑RGBW‑Dies – bit0 = R, bit1 = G,
 bit2 = B, bit3 = W; gültig sind alle 15 nicht‑leeren Kombinationen (1–15).
@@ -423,54 +434,59 @@ beim Einschalten bleibt davon unberührt.
 
 | Offset | Feld | Typ | Default | Bemerkung |
 |---|---|---|---|---|
-| 0 | `target_id` | uint8 | 1 | 1..99 |
-| 1 | `station_id` | uint8 | 1 | welche Station bedienen (Filter im `HIT_REPORT`) |
-| 2 | `sound_id` | uint8 | 1 | Sound‑Index für `HIT_REPORT` |
-| 3..4 | `hit_time_ms` | uint16 | 10000 | wie lange Switches AN / Hit‑LED‑Animation läuft |
-| 5..6 | `cooldown_ms` | uint16 | 2000 | nach Hit: weitere Treffer ignorieren, LED‑Ring schwarz |
-| 7 | `sw_animation` | uint8 | 0 | Pattern‑Index (heute 0 oder 1, später mehr) |
-| 8 | `sw_channels` | uint8 | 0b00000111 | Bitmaske: bit0 = SW1 (potentialfrei), bit1 = SW_5V, bit2 = SW_3V3 |
-| 9..15 | reserved | – | 0 | für künftige Felder |
+| 0..5 | `station_mac` | uint8[6] | 0 | MAC der Station, die den Treffer‑Sound spielt (Config‑Box: Auswahl aus der Discovery‑Liste); 0 = ungesetzt → Treffer verpuffen |
+| 6 | `sound_id` | uint8 | 1 | Sound‑Index für `HIT_REPORT` |
+| 7..8 | `hit_time_ms` | uint16 | 10000 | wie lange Switches AN / Hit‑LED‑Animation läuft |
+| 9..10 | `cooldown_ms` | uint16 | 2000 | nach Hit: weitere Treffer ignorieren, LED‑Ring schwarz |
+| 11 | `sw_animation` | uint8 | 0 | Pattern‑Index (heute 0 oder 1, später mehr) |
+| 12 | `sw_channels` | uint8 | 0b00000111 | Bitmaske: bit0 = SW1 (potentialfrei), bit1 = SW_5V, bit2 = SW_3V3 |
+| 13..15 | reserved | – | 0 | für künftige Felder |
 
 Das Feld `cooldown_ms` ist neu gegenüber dem heutigen Target‑Code – siehe
 [Doc 11 / Cooldown‑Punkt](11-offene-punkte.md). Das Feld `sw_channels` ersetzt
 die heutige Hartverdrahtung „alle drei Switches gleichzeitig"
 ([`08-software-target.md`](08-software-target.md) Z. 81–84).
 
-### 3.7 Flows: Spielbetrieb, Setup, Konfiguration
+### 3.7 Flows: Spielbetrieb, Konfiguration, Update
 
-Drei Abläufe nutzen alle das gleiche Paket‑Format:
+Die Abläufe nutzen alle das gleiche Paket‑Format:
 
 **1. Spielbetrieb (regulärer Treffer):**
 
 ```
-Target ──(IR‑Treffer empfangen)──► HIT_REPORT (Broadcast, station_id=X, sound_id=Y)
+Target ──(IR‑Treffer empfangen)──► HIT_REPORT (Broadcast, station_mac=X, sound_id=Y)
                                        │
                                        ▼
-                          Stationen mit station_id == X spielen Sound Y
+                          Station mit MAC == X spielt Sound Y
+                          (Config‑Box‑Live‑Monitor liest mit)
 ```
 
 Latenz‑Zielwert: < 50 ms vom IR‑Decode bis Sound‑Start. ESP‑NOW selbst
 liefert in < 10 ms; der Rest geht für Decode + LittleFS‑Open + I²S‑Anlauf
 drauf.
 
-**2. Stations‑ID setzen per Stab‑Trigger:**
+**2. Stations‑Setup:** entfallen seit v0x02 – eine neue Station braucht
+keine ID mehr; einschalten, „Neu suchen" auf der Config‑Box, fertig.
+(Historischer Flow `SETUP_BEGIN` → Stab‑Trigger → `SETUP_TAKE` in der
+Git‑Historie dieses Dokuments.)
+
+**2b. Firmware‑Update (seit 2026‑07‑12):**
 
 ```
-Config‑Box ──SETUP_BEGIN(timeout=60s)──► alle Stationen
+Config‑Box ──UPDATE_BEGIN(timeout=5min)──► Gerät (Unicast)
+                                              │
+              Gerät ──UPDATE_ACK──► Config‑Box (zeigt AP‑Name an)
                                               │
                                               ▼
-                            Stationen: Status‑LED + Stab‑LEDs lila
+              Gerät: ESP‑NOW aus, SoftAP "infinitag-sta-220AAC",
+              Upload‑Seite http://192.168.4.1 (WebUpdateService, Core‑Repo)
                                               │
-                                  Tobias drückt Trigger an Wunsch‑Station
+                    Browser‑Upload firmware.bin → OTA‑Slot → Reboot
+                    (ohne Upload: Timeout → Reboot in alte Firmware)
                                               │
                                               ▼
-Wunsch‑Station ──SETUP_TAKE(mac=…, new_id=03)──► Broadcast
-                                              │
-                                              ▼
-              Andere Stationen sehen SETUP_TAKE → zurück IDLE
-              Wunsch‑Station persistiert ID, blinkt 3× Cyan
-              Config‑Box sieht SETUP_TAKE → Menü „Setup abgeschlossen"
+              Config‑Box: „Neu suchen" → fw_version im DISCOVER_REPLY
+              zeigt den neuen Stand; '^' in der Liste = Nachzügler
 ```
 
 **3. Konfiguration per Discovery + Identify‑Blink (Standardweg):**
@@ -865,7 +881,7 @@ unkritisch.
 │  12 V Eingang ─► Buck‑Down ─► 5 V intern, 12 V → Verstärker     │
 └─────────────────────────────────────────────────────────────────┘
                           │ ESP‑NOW
-                          │ {station_id, sound_id, target_id}
+                          │ {station_mac, sound_id}
               ┌───────────┴──────────┐
               │       Targets        │
               │ (ESP32‑S3, IR‑Empf., │
@@ -1663,15 +1679,17 @@ unverändert.
 OLED‑Anschluss (8‑pol JST‑XH: GND, VCC, SCL, SDA, K1–K4) bleibt als
 **Footprint auf dem Logic‑PCB**, wird aber nur in Stationen bestückt, die
 ihn brauchen. Begründung: Die Konfiguration läuft künftig übers **Config‑Tool
-per ESP‑NOW** (siehe [`18-config-tool.md`](18-config-tool.md)) – `SETUP_BEGIN`
-→ Stab‑Trigger → `SETUP_TAKE` für die ID, `DISCOVER`/`CFG_WRITE` für
-Lautstärke etc. Damit braucht **nicht jede Station ein eigenes OLED**.
+per ESP‑NOW** (siehe [`18-config-tool.md`](18-config-tool.md)) –
+`DISCOVER`/`CFG_WRITE` für Lautstärke, LED‑Farben etc. (seit Protokoll
+v0x02 ohne Setup‑Flow, die MAC ist die Identität). Damit braucht
+**nicht jede Station ein eigenes OLED**.
 
 - Die 4 Tasten‑GPIOs (35–38) + I²C bleiben geroutet, in OLED‑losen Stationen
   einfach frei.
 - Die **Wand‑Status‑LED** (1× SK6812 außen) wird damit zur einzigen
-  Pflicht‑Rückmeldung pro Station; der **Boot‑ID‑Blink** (N× Stationsfarbe,
-  s. 2.6) bleibt wichtig, um die ID auch ohne Display abzulesen.
+  Pflicht‑Rückmeldung pro Station; die physische Zuordnung ohne Display
+  übernimmt seit v0x02 das **Identify‑Blinken** über die Config‑Box
+  (der frühere Boot‑ID‑Blink starb mit den IDs).
 - Firmware‑Konzept: jede OLED‑Funktion muss auch übers Config‑Tool
   erreichbar sein (im Doc‑18‑Flow bereits so angelegt). Das OLED wird damit
   reiner Service‑Komfort für die „Meister‑Station" am Basteltisch.
