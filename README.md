@@ -64,7 +64,13 @@ Peer-to-Peer-Funk – und ein Zauberstab statt eines Taggers.
 
 ## Lizenz
 
-[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) – Tobias Stewen.
+Doku & Wissensbasis (dieses Repo):
+[CC BY-NC-SA 4.0](LICENSE) – © 2026 Tobias Stewen. Die Firmware-Repos
+(core, station, config) stehen unter
+[PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/).
+Beides erlaubt nicht-kommerzielle Nutzung und Anpassung mit
+Namensnennung; **kommerzielle Nutzung nur mit vorheriger Genehmigung** –
+Anfragen an info@hallow-tech.de.
 
 Infinitag Now ist eine **komplette Neuentwicklung** – eigenes Protokoll,
 eigene Hardware, eigene Firmware. Mit dem klassischen Infinitag teilt es
