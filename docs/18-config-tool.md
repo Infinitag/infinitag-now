@@ -733,6 +733,10 @@ Lochraster.
       **Git‑Historie** – vorher einmalig mit `git filter-repo`/BFG
       herausschreiben (Achtung: ändert alle Commit‑Hashes, Tags neu
       setzen).
+- [ ] **Beim Public‑Schalten (alle Repos): Branch‑Protection für `main`**
+      aktivieren (Force‑Push + Löschen blockieren, linear history) –
+      bei privaten Repos verlangt GitHub dafür einen Bezahl‑Plan
+      (geprüft 2026‑07‑12, API 403), bei öffentlichen ist es kostenlos.
 
 ---
 
