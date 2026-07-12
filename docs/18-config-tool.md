@@ -427,9 +427,17 @@ Mechanismus lokal (AP `infinitag-cfg-XXXXXX`), vorher **Batterie‑Check**
 Verlassen des Modus = Reboot (ESP‑NOW ist abgebaut).
 
 **A3 – Versions‑Check:** jedes `DISCOVER_REPLY` enthält `fw_version`.
-Die Liste markiert Geräte, die älter sind als die höchste gesehene
-Version ihres Typs, mit `^` (§ 5.1); die exakte Version steht im Titel
-des Geräte‑Menüs.
+Die Liste markiert Geräte mit `^` (§ 5.1), deren Version kleiner ist als
+die **Referenz = max(** höchste Version aktuell in der Liste, höchste je
+gesehene Version des Typs **)**; die exakte Version steht im Titel des
+Geräte‑Menüs. Das „je gesehen"-Gedächtnis (seit 2026‑07‑12) liegt im NVS
+der Box (`VersionMemo`, nur wachsend, Schreibzugriff nur bei neuem
+Maximum) – damit behält auch eine **einzelne** Station ihren Marker,
+sobald irgendwann eine neuere Firmware im Netz war. Nach einem bewussten
+Downgrade bleibt der Marker stehen: Tools → „Versions‑Memo Reset"
+löscht das Gedächtnis. Stufe 2 (exakte Soll‑Version aus einem auf der
+Box liegenden Firmware‑Image) kommt mit dem ESP‑NOW‑OTA und wird ein
+dritter max()-Term (§ 12).
 
 **Versions‑ & Release‑Konvention (2026‑07‑12):** Versionen entstehen
 **bewusst**, nicht bei jeder Code‑Änderung (Zwischenstände beim Basteln
@@ -724,8 +732,11 @@ Lochraster.
       der Config‑Box zwischenspeichern und per Funk in 240‑Byte‑Chunks an
       Geräte schieben – erst angehen, wenn das AP‑Hüpfen bei vielen
       Targets wirklich nervt. Soll‑Version dann aus dem App‑Descriptor
-      (`esp_app_desc_t`) des gespeicherten Images lesen (Stufe 2 des
-      Versions‑Checks).
+      (`esp_app_desc_t`) des gespeicherten Images lesen = **Stufe 2 des
+      Versions‑Checks** (entschieden 2026‑07‑12: wird ein dritter
+      max()-Term neben Listen‑Maximum und VersionMemo; Stufe 1 bleibt
+      als stets verfügbarer Fallback bestehen – sie ist blind ohne
+      Vergleichsgerät, Stufe 2 ist blind ohne geladenes Image).
 - [ ] **ESP‑NOW‑Sniffer** (Tools‑Menü) – aus V0.1 offen.
 - [ ] **Vor dem Public‑Schalten des Station‑Repos:** Die WAV‑Sounds sind
       seit 2026‑07‑12 zwar aus dem Arbeitsstand entfernt (Drittmaterial,
