@@ -72,6 +72,7 @@ Drei Hardware‑Bausteine, alle ESP32‑basiert:
 | [`18-config-tool.md`](18-config-tool.md) | **Lebendes Konzept‑Dokument** zur zentralen Config‑Box (ESP32‑C3 Super Mini + OLED + Rotary Encoder, stateless, ESP‑NOW‑Discovery + Identify‑Blink, Web‑UI im SoftAP) |
 | [`19-pcb-split-netliste.md`](19-pcb-split-netliste.md) | **Arbeitsdokument** zum Station‑V2 PCB‑Split: Bauteil‑/Netz‑Aufteilung Logic‑Board ↔ Audio‑Board, Inter‑Board‑Pinout, EasyEDA‑Vorgehen |
 | [`20-configbox-steckbrett.md`](20-configbox-steckbrett.md) | **Aufbau‑Anleitung** für den Config‑Box‑Steckbrett‑Prototyp: Verdrahtung nach GPIO‑Plan v3, Flash‑Anleitung, Bring‑up in 6 Stufen, Troubleshooting |
+| [`21-ota-vollausbau.md`](21-ota-vollausbau.md) | **Konzept** OTA-Vollausbau: Box holt Releases selbst von GitHub (WLAN-Provisioning, HTTPS), aktualisiert sich und verteilt Firmware per ESP-NOW-Push an Stationen/Targets („Alle aktualisieren" ohne PC) |
 
 ## Quellverweise
 

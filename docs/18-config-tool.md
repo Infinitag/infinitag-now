@@ -728,15 +728,15 @@ Lochraster.
       (`esp_ota_mark_app_valid_cancel_rollback()`), sonst fällt der
       nächste Reset auf den alten Slot zurück. Fängt „bootet, ist aber
       kaputt" ab; braucht `CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE`.
-- [ ] **ESP‑NOW‑OTA („Update‑Maultier", Variante B)**: Firmware‑Image auf
-      der Config‑Box zwischenspeichern und per Funk in 240‑Byte‑Chunks an
-      Geräte schieben – erst angehen, wenn das AP‑Hüpfen bei vielen
-      Targets wirklich nervt. Soll‑Version dann aus dem App‑Descriptor
-      (`esp_app_desc_t`) des gespeicherten Images lesen = **Stufe 2 des
-      Versions‑Checks** (entschieden 2026‑07‑12: wird ein dritter
-      max()-Term neben Listen‑Maximum und VersionMemo; Stufe 1 bleibt
-      als stets verfügbarer Fallback bestehen – sie ist blind ohne
-      Vergleichsgerät, Stufe 2 ist blind ohne geladenes Image).
+- [ ] **OTA‑Vollausbau**: Box holt Releases selbst von GitHub, aktualisiert
+      sich und verteilt Firmware per ESP‑NOW‑Push („Alle aktualisieren"
+      ohne PC) – komplettes Konzept inkl. Etappenplan und getroffener
+      Entscheidungen: **[`21-ota-vollausbau.md`](21-ota-vollausbau.md)**
+      (ersetzt die frühere „Update‑Maultier"-Skizze an dieser Stelle;
+      Stufe 2 des Versions‑Checks = dritter max()-Term aus dem
+      App‑Descriptor des gespeicherten Images, Stufe 1 + VersionMemo
+      bleiben Fallback). Etappe 2 setzt den Public‑Gang voraus (Punkte
+      oben).
 - [ ] **ESP‑NOW‑Sniffer** (Tools‑Menü) – aus V0.1 offen.
 - [ ] **Vor dem Public‑Schalten des Station‑Repos:** Die WAV‑Sounds sind
       seit 2026‑07‑12 zwar aus dem Arbeitsstand entfernt (Drittmaterial,
