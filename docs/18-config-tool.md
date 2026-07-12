@@ -403,6 +403,15 @@ Tobias    Config‑Box                 Gerät
 
 - Timeout (Default 5 min, `payload[0]`): ohne Upload rebootet das Gerät
   zurück in die alte Firmware – nichts bleibt im Update-Modus hängen.
+- **Upload‑Seite zeigt das Gerät** („Station 220AAC", laufende Version)
+  und **lehnt falsch benannte Dateien ab** (erwartet
+  `infinitag-station-*.bin` bzw. `infinitag-config-*.bin`) – schützt vor
+  Verwechslung bei gleichem Chip; falscher Chip (C3↔S3) wird ohnehin von
+  der IDF‑Image‑Prüfung abgewiesen (ergänzt 2026‑07‑12 nach OTA‑Test).
+- **Erfolgs‑Rückmeldung:** Der Update‑Screen der Box pollt alle 3 s per
+  `DISCOVER_REQ`; meldet sich das Gerät nach dem Reboot wieder, zeigt
+  die Box „Update OK: vX.Y.Z" (Versionsvergleich) bzw. „Zurueck,
+  unveraendert" und springt automatisch in die Geräteliste zurück.
 - Abgebrochener Upload kann nicht booten (Boot‑Slot wechselt erst nach
   vollständigem, validiertem Empfang). „Neue Firmware bootet, ist aber
   kaputt" fängt später der IDF‑Rollback ab (offener Punkt, § 12).
