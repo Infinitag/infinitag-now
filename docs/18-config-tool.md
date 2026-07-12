@@ -417,9 +417,16 @@ Verlassen des Modus = Reboot (ESP‑NOW ist abgebaut).
 **A3 – Versions‑Check:** jedes `DISCOVER_REPLY` enthält `fw_version`.
 Die Liste markiert Geräte, die älter sind als die höchste gesehene
 Version ihres Typs, mit `^` (§ 5.1); die exakte Version steht im Titel
-des Geräte‑Menüs. Konvention: **jeder Flash‑Stand, der rausgeht, zählt
-die Patch‑Nummer hoch** (`STATION_FW_*` in `NowStation.h`, `cfg::FW_*`
-in `Config.h` der Box), sonst zeigt der Check Gleichstand, wo keiner ist.
+des Geräte‑Menüs.
+
+**Versions‑ & Release‑Konvention (2026‑07‑12):** Versionen entstehen
+**bewusst**, nicht bei jeder Code‑Änderung (Zwischenstände beim Basteln
+behalten die Nummer; der Check zeigt dann Gleichstand – gewollt). Ein
+Release läuft pro Geräte‑Repo über `bash release.sh`: Version in den
+Quellen (`cfg::FW_*` bzw. `STATION_FW_*`) erhöhen → committen → Skript
+baut, taggt `vX.Y.Z`, pusht und erstellt ein **GitHub‑Release mit der
+`firmware.bin` als Download‑Asset** – zu jeder Version liegt damit die
+passende Datei zum Herunterladen bereit (fürs SoftAP‑Update).
 
 ### 6.2 Flow B: Geräte über Liste auswählen + editieren
 
