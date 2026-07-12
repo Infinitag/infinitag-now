@@ -79,21 +79,31 @@ Entwicklung erhalten.
 
 ### 3.4 Image-Speicher auf der Box
 
-- Neue **Partitionstabelle für den C3** (4 MB): OTA-Slots von 2× 1280 KB
-  auf 2× ~1088 KB verkleinern → LittleFS wächst auf ~1,85 MB → Platz für
-  **Station- UND Target-Image gleichzeitig** (je ~0,9 MB, Zielbild
-  „ein Rundgang für alles").
-- Kosten: Box-Firmware (aktuell ~0,83 MB) hat dann ~25 % Luft statt 35 % –
-  im Blick behalten, wenn die Web-UI V0.2 kommt. **Partitionswechsel geht
-  nicht per OTA** → einmaliger USB-Flash, idealerweise bevor die Box
-  endgültig zugeschraubt wird.
-- Ablage: `/img/station.bin`, `/img/target.bin` + Metadatei mit Version
-  und CRC. Beim Laden eines Images wird der **App-Descriptor**
-  (`esp_app_desc_t`, fester Offset 0x20 im Image: Version, Projektname)
-  geparst → Plausibilitätscheck („ist das wirklich Station-Firmware?")
-  und **Stufe 2 des Versions-Checks**: Die Image-Version wird dritter
-  max()-Term des `^`-Markers (neben Listen-Maximum und VersionMemo,
-  Doc 18 § 6.1 A3).
+- **Revidiert bei der Umsetzung (2026-07-12):** Der ursprüngliche Plan
+  (OTA-Slots verkleinern → zwei Images gleichzeitig) ist **nicht
+  haltbar** – mit dem HTTPS/TLS-Stack aus Etappe 2 belegt die
+  Box-Firmware ~1,07 MB und damit 96 % eines 1088-KB-Slots. Es bleibt
+  beim **Standard-Partitionslayout** (2× 1280 KB OTA, ~1,5 MB LittleFS,
+  kein USB-Erstflash nötig!) und einem **Ein-Image-Fach**: Der Store
+  hält genau ein Geräte-Image; ein neuer Upload/Download ersetzt das
+  vorhandene. Praktisch heißt das ein Update-Rundgang pro Gerätetyp
+  (erst Stationen, dann Targets). Zwei Images gleichzeitig gibt es
+  erst mit größerer Box-Hardware (z. B. 8-MB-Modul).
+- Ablage: `/img/station.bin`, `/img/target.bin`. Beim Laden eines Images
+  wird ein **eigener Firmware-Marker** gescannt und daraus Gerätetyp +
+  Version gelesen → Plausibilitätscheck („ist das wirklich
+  Station-Firmware?") und **Stufe 2 des Versions-Checks** (die
+  Image-Version speist das VersionMemo und ist damit Teil der
+  max()-Referenz des `^`-Markers, Doc 18 § 6.1 A3).
+- **Warum ein eigener Marker statt `esp_app_desc_t`?** (Korrektur
+  2026-07-12 gegenüber der ersten Skizze): Der IDF-App-Descriptor wird
+  beim Bau der *vorkompilierten Arduino-Bibliotheken* befüllt – alle
+  unsere Images trügen dieselbe Framework-Version, nicht unsere
+  Firmware-Version. Stattdessen bettet jede Firmware über das
+  Core-Makro `INOW_FW_MARKER(typ, major, minor, patch)` einen 13-Byte-
+  Block ein (`@INOWFW␁<typ><maj><min><pat>@`), den die Box beim Upload
+  streamend sucht (Suchmuster im Code geteilt abgelegt, damit die
+  Box-Firmware sich nicht selbst matcht).
 
 ### 3.5 ESP-NOW-Push (Kern der Variante B)
 
@@ -149,7 +159,7 @@ Doc 18 § 12).
 
 | Etappe | Inhalt | Repos | USB nötig? |
 |---|---|---|---|
-| 1 | Neue Partitionstabelle Box + Image-Store (LittleFS) + App-Descriptor-Parser + Stufe-2-Term im `^`-Marker; Image-Upload zunächst über die vorhandene SoftAP-Seite | config | **ja, einmalig** |
+| 1 | Image-Store (LittleFS, Ein-Image-Fach) + FW-Marker-Scanner + Stufe-2-Term im `^`-Marker; Image-Upload über die vorhandene SoftAP-Seite | core, config, station | nein |
 | 2 | WLAN-Provisioning (SoftAP-Seite) + HTTPS-Fetcher (GitHub Releases) + Self-Update aus dem Netz + Geräte-Images in den Store | config | nein |
 | 3 | ESP-NOW-Push: Protokoll (Core: Nachrichten + PROTOCOL.md + Tests), Empfänger-Modul (Core, geteilt), Sender + Fortschritts-UI (Box), Empfänger-Einbau Station | core, config, station | nein |
 | 4 | „Alle aktualisieren"-Flow + Abschlussbericht; Target-Empfänger, sobald `infinitag-now-target` existiert | config, target | nein |
@@ -161,8 +171,8 @@ AP-Hüpfen für Stationen weg, nach 4 ist das Zielbild komplett.
 ## 6. Entscheidungen (getroffen 2026-07-12)
 
 - GitHub-Releases-API direkt als Quelle (kein eigener Manifest-Server).
-- Partitionstabelle mit zwei Image-Plätzen (Station + Target
-  gleichzeitig), Erstflash per USB vor dem endgültigen Zuschrauben.
+- Standard-Partitionslayout + Ein-Image-Fach (Details/Begründung § 3.4);
+  ein Rundgang pro Gerätetyp.
 - Self-Update streamt direkt in den OTA-Slot (kein Speicherbedarf).
 - Reihenfolge im Update-Lauf: Images laden → Self-Update → Verteilen.
 - SoftAP-Weg bleibt als Fallback/Entwicklungsweg bestehen.
