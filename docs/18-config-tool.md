@@ -335,7 +335,7 @@ Web‑UI (§ 9) wirklich kommt, bekommt sie bewusst einen neuen Einstieg.
 ```
 ┌─[Target 11FF22]────────────┐
 │ Station    :  220AAC       │  ← Auswahl aus der Discovery‑Liste (MAC)
-│ Sound      :  06           │  ← Sound‑Klartext nur per Web‑UI; OLED Nummer
+│ Sound      :  06 Daemon    │  ← Name aus dem SoundCatalog (Core‑Repo)
 │ Hit‑Time   : 10000 ms      │
 │ Cooldown   :  2000 ms      │
 │ SW‑Anim    :  0 (an/aus)   │
@@ -596,27 +596,18 @@ Setup‑Flow entfallen (v0x02).
 
 ### 9.3 Sound‑Klartext‑Liste
 
-Die Klartextnamen der Sounds (`06 = Schrei kurz`, `13 = Halloween‑Trommel`)
-sind **nur auf der Config‑Box** gepflegt, nicht im Target/Station‑NVS. Pflege
-über `data/sounds.json` im LittleFS der Config‑Box, wird per `pio run -t
-uploadfs` reingeschoben. Inhalt z. B.:
-
-```json
-{
-  "1": "Geist",
-  "2": "Werwolf",
-  "3": "Hexe",
-  "6": "Schrei kurz",
-  "13": "Trommel"
-}
-```
-
-Wenn das Target im NVS Sound 6 stehen hat, zeigt die Config‑Box „06 –
-Schrei kurz" an. Wenn `sounds.json` einen anderen Mapping‑Stand hat als
-die Sound‑Dateien auf der Station, ist die Klartext‑Anzeige falsch – aber
-das Spiel selbst funktioniert weiter (es zählt nur die Nummer im Paket).
-**Pflege‑Disziplin**: nach jedem neuen Sound‑Upload zur Station auch
-`sounds.json` auf der Config‑Box mit aktualisieren.
+**Gelöst seit 2026‑07‑12 – anders als ursprünglich geplant:** Statt einer
+`sounds.json` im LittleFS der Config‑Box gibt es den zentralen
+**`SoundCatalog.h` im Core‑Repo** (Sound‑ID → Dateipfad + Kurzname
+≤ 8 Zeichen). Beide Firmwares kompilieren dieselbe Tabelle ein: die
+Station nimmt daraus ihre Dateipfade, die Config‑Box zeigt schon auf dem
+**OLED** „06 Daemon" statt nackter Nummern (Sound‑Test und
+Target‑Editor) – die Web‑UI bekommt die Namen später gratis aus
+derselben Quelle. Divergenz‑Risiko bleibt: Wer den Katalog ändert, muss
+Station **und** Config‑Box neu flashen (per OTA einfach) und die WAVs
+per `uploadfs` einspielen – Anleitung in `data/README.md` des
+Station‑Repos. Falsche Namen brechen nichts, im Paket zählt nur die
+Nummer.
 
 ### 9.4 Sicherheit
 
@@ -736,6 +727,12 @@ Lochraster.
       (`esp_app_desc_t`) des gespeicherten Images lesen (Stufe 2 des
       Versions‑Checks).
 - [ ] **ESP‑NOW‑Sniffer** (Tools‑Menü) – aus V0.1 offen.
+- [ ] **Vor dem Public‑Schalten des Station‑Repos:** Die WAV‑Sounds sind
+      seit 2026‑07‑12 zwar aus dem Arbeitsstand entfernt (Drittmaterial,
+      Herkunft nicht rekonstruierbar), stecken aber noch in der
+      **Git‑Historie** – vorher einmalig mit `git filter-repo`/BFG
+      herausschreiben (Achtung: ändert alle Commit‑Hashes, Tags neu
+      setzen).
 
 ---
 

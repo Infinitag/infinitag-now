@@ -606,6 +606,16 @@ in [`11-offene-punkte.md`](11-offene-punkte.md).
 
 ### 4.3 Aktuelle Test‑Sound‑Bibliothek (Stand 2026‑05‑16)
 
+> **Aktualisierung 2026‑07‑12:** Die Zuordnung Sound‑ID → Datei +
+> Anzeigename lebt jetzt zentral im **`SoundCatalog.h` des Core‑Repos**
+> (eine Quelle für Station und Config‑Box; die Box zeigt „06 Daemon"
+> statt nackter Nummern). Die WAV‑Dateien selbst sind **aus dem
+> Station‑Repo entfernt** (Drittmaterial ungeklärter Herkunft, siehe
+> LICENSE‑Ausnahme) und liegen nur noch lokal in `data/` –
+> `pio run -t uploadfs` unverändert. Anleitung für eigene Sounds:
+> `data/README.md` im Station‑Repo. Die Tabelle unten beschreibt den
+> mitgelieferten Beispiel‑Bestand.
+
 Die WAV‑Bibliothek liegt im **aktiven PlatformIO‑Projekt unter**
 `/Volumes/basteln/Infinitag/Station/data/` und wird per
 `pio run -t uploadfs` (bzw. nach jedem `Upload` automatisch via
