@@ -95,15 +95,21 @@ Entwicklung erhalten.
   Station-Firmware?") und **Stufe 2 des Versions-Checks** (die
   Image-Version speist das VersionMemo und ist damit Teil der
   max()-Referenz des `^`-Markers, Doc 18 § 6.1 A3).
-- **Stolperstein LittleFS (gefunden 2026-07-12, Config-PR #16):**
-  `File::size()` auf einem noch **offenen Schreib-Handle** liefert nur
-  die zuletzt committete Metadaten-Größe (`stat()` per Pfad →
-  `lfs_stat`; der ungesyncte Rest fehlt, Granularität 4-KB-Block).
-  Symptom: Store meldete 864.256 statt 867.856 Bytes, der Funk-Push
-  kündigte die zu kleine Größe mit der Voll-Datei-CRC an → CRC-Fehler
-  auf jedem Gerät (nach Box-Reboot unauffällig, weil `begin()` frisch
-  scannt). Regel für alle Geräte-Firmwares: Größe beim Schreiben
-  selbst zählen bzw. erst `close()`, dann messen.
+- **Stolperstein Datei-Downloads (aufgeklärt 2026-07-12, Config-PR
+  #16/#17):** Große HTTPS-Downloads in eine LittleFS-Datei verloren
+  reproduzierbar den **letzten 4-KB-Teilblock** (867.856 → 864.256
+  Bytes). Ursachenkette: (a) Der TLS-/Socket-Teardown von
+  `HTTPClient`/`WiFiClientSecure` **schließt fremde File-Deskriptoren
+  mit** (beobachtet als `EBADF` auf eigenem `fsync`/`close`) – dabei
+  wurde die Datei mit dem bis dahin übergebenen Stand committet;
+  (b) Arduinos `File` puffert per newlib-stdio in 4-KB-Blöcken, die
+  letzten ≤4 KB starben beim `fclose` auf dem toten Deskriptor;
+  (c) `File::close()` ist `void` und verschluckt den Fehler, und
+  `File::size()` auf offenem Schreib-Handle zeigt nur die committete
+  Größe. Regeln: Datei-Sink **roh per POSIX** (`open/write/fsync/
+  close`, Fehler loggen) statt Arduino-`File` schreiben, den Sink
+  **vor** `http.end()` schließen, Größe beim Schreiben selbst zählen
+  und nach dem Schließen gegen die Platte verifizieren.
 - **Warum ein eigener Marker statt `esp_app_desc_t`?** (Korrektur
   2026-07-12 gegenüber der ersten Skizze): Der IDF-App-Descriptor wird
   beim Bau der *vorkompilierten Arduino-Bibliotheken* befüllt – alle
