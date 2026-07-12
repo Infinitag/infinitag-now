@@ -277,11 +277,14 @@ Hauptmenü
 ├── Targets                  ← Geräteliste: < Zurück / Neu suchen / MAC‑Suffixe
 │   └── Target wählen        → Konfigurieren / Update (OTA)
 ├── Live‑Monitor             ← zeigt eingehende HIT_REPORTs als Tickerzeile
-├── Web‑UI                   ← SoftAP an/aus, zeigt IP + QR‑Code (V0.2)
 └── Tools
     ├── Firmware‑Info        ← eigene Version, MAC, freier Heap, VBAT
     └── Update‑Modus         ← eigener SoftAP‑Updater der Config‑Box (§ 6.1)
 ```
+
+Der frühere Hauptmenü‑Punkt „Web‑UI" (Platzhalter „Kommt in V0.2") wurde
+2026‑07‑12 entfernt – SoftAP‑Funktionen leben unter Tools; wenn die
+Web‑UI (§ 9) wirklich kommt, bekommt sie bewusst einen neuen Einstieg.
 
 (Der früher angedachte ESP‑NOW‑Sniffer bleibt offener Punkt, § 12.)
 
@@ -554,8 +557,6 @@ MENU_MAIN
  ├──► TARGET_LIST ──► DEVICE_MENU ──► EDIT / DEV_UPDATE
  │
  ├──► LIVE_MONITOR (HIT_REPORT‑Stream auf OLED)
- │
- ├──► WEB_UI (Platzhalter, V0.2)
  │
  └──► TOOLS ──► FIRMWARE_INFO
          └───► SELF_UPDATE (eigener SoftAP‑Updater; Ausgang nur per Reboot)
