@@ -738,16 +738,17 @@ Lochraster.
       bleiben Fallback). Etappe 2 setzt den Public‑Gang voraus (Punkte
       oben).
 - [ ] **ESP‑NOW‑Sniffer** (Tools‑Menü) – aus V0.1 offen.
-- [ ] **Vor dem Public‑Schalten des Station‑Repos:** Die WAV‑Sounds sind
-      seit 2026‑07‑12 zwar aus dem Arbeitsstand entfernt (Drittmaterial,
-      Herkunft nicht rekonstruierbar), stecken aber noch in der
-      **Git‑Historie** – vorher einmalig mit `git filter-repo`/BFG
-      herausschreiben (Achtung: ändert alle Commit‑Hashes, Tags neu
-      setzen).
-- [ ] **Beim Public‑Schalten (alle Repos): Branch‑Protection für `main`**
-      aktivieren (Force‑Push + Löschen blockieren, linear history) –
-      bei privaten Repos verlangt GitHub dafür einen Bezahl‑Plan
-      (geprüft 2026‑07‑12, API 403), bei öffentlichen ist es kostenlos.
+- [x] **History‑Cleanup Station‑Repo** (erledigt 2026‑07‑12): WAVs per
+      `git filter-repo` aus der kompletten Historie entfernt, Tags neu
+      geschrieben, Releases samt Assets intakt. Backup vor dem Rewrite:
+      `/Volumes/Basteln/Infinitag/backup-station-vor-history-cleanup-2026-07-12.bundle`.
+      Rest‑Risiko: verwaiste alte Commits bleiben bei GitHub intern bis
+      zu deren GC per SHA auflösbar (Datei‑Inhalte nicht mehr abrufbar);
+      wasserdicht nur per GitHub‑Support‑Anfrage – bewusst akzeptiert.
+- [x] **Alle vier Repos öffentlich + Branch‑Protection** (erledigt
+      2026‑07‑12): Force‑Push und Branch‑Löschen auf `main` blockiert,
+      linear history erzwungen (Admins ausgenommen). Secrets‑/PII‑Scan
+      der Historien vorher: ohne Befund.
 
 ---
 
