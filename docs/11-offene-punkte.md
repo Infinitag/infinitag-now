@@ -1208,3 +1208,21 @@ Sonnenlicht‑Flackern) abgesichert.
 Quelle: Station `src/main.cpp` (`IR_SHOT_MS`, Kommentar am Define),
 PROTOCOL.md „Spielbetrieb". Der Kalibriermodus (DBG_CALIBRATE, Test 6)
 ist davon unabhängig – er nutzt Dauerlicht statt Telegramm.
+
+### 42. Station: Lautstärke unten immer noch zu laut / wenig Spielraum
+
+**Stand 2026-07-13:** Nach dem Umbau auf die perzeptive 40-dB-Kurve
+(Station-PR #19) ist es laut Tobias' Hörtest im unteren Bereich immer
+noch zu laut und der Spielraum klein. Bewusst zurückgestellt („kein
+Fokus aktuell"). Mögliche Hebel, wenn es wieder ansteht:
+
+- Kurven-Dynamik vergrößern (50–60 dB statt 40 dB, 1 % = 0,5–0,6 dB) –
+  reine Firmware-Änderung in `applyStationConfig()`.
+- Digitale Obergrenze absenken (`VOLUME_MAX` bzw. Speaker-Profil) –
+  kostet Maximalpegel draußen.
+- Hardware: TPA3110-Gain-Beschaltung prüfen (Gain-Pins) oder
+  Spannungsteiler PCM5102A → Amp – senkt den Grundpegel der ganzen
+  Kette, dann trägt die 40-dB-Kurve besser.
+
+Quelle: Hörtest 2026-07-13 (2 % deutlich hörbar, auch nach Kurve
+gefühlt laut); `src/main.cpp` `applyStationConfig()`.
