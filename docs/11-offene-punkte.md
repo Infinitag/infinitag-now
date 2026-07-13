@@ -1185,3 +1185,26 @@ auf dem neuen C3‑Träger‑PCB oder als Breakout in der Box platzieren.
   gefahr, Reversibilitäts‑Doppelverdrahtung und teure Kabel‑Beschaffung mit
   eMarker‑Test – alles hinfällig, da Station festgeschraubt + Stab angelötet
   (kein Hot‑Plug). Volle Begründung in § 8.11.
+
+### 41. Infinitag Now: IR‑Schuss‑Telegramm festlegen (mit Target‑Firmware)
+
+**Stand 2026‑07‑13:** Die Station schießt im Live‑Betrieb (Station‑PR #14)
+einen **rohen 5‑ms‑Burst @ 38 kHz** – bewusst noch ohne Datentelegramm.
+Das Target braucht den Schützen nicht zu identifizieren (es kennt „seine"
+Station aus der Config, `station_mac` im Target‑Blob, siehe `PROTOCOL.md`),
+aber ein reiner Burst ist nicht gegen Fremd‑IR (Fernbedienungen,
+Sonnenlicht‑Flackern) abgesichert.
+
+**Zu entscheiden mit der Target‑Firmware (`infinitag-now-target`):**
+
+- Klassisches 24‑Bit‑RC5‑Telegramm aus Doc 05 wiederverwenden
+  (`Infinitag_Core::irEncode`, `isSystem=false, cmd=1`) – Vorteil:
+  vorhandene, erprobte Decode‑Routine; Nachteil: IRremote‑Abhängigkeit.
+- Oder eigenes minimales Now‑Format (z. B. Header‑Burst + 8 Bit Magic),
+  bit‑gebangt über LEDC – Vorteil: schlank, RMT/LEDC ohne Lib.
+- Latenz‑Budget beachten: < 50 ms IR‑Decode → `HIT_REPORT` → Sound‑Start
+  (Doc 12 § 3.7).
+
+Quelle: Station `src/main.cpp` (`IR_SHOT_MS`, Kommentar am Define),
+PROTOCOL.md „Spielbetrieb". Der Kalibriermodus (DBG_CALIBRATE, Test 6)
+ist davon unabhängig – er nutzt Dauerlicht statt Telegramm.

@@ -243,6 +243,7 @@ Position der Daisy‑Chain ist die Status‑LED, danach folgen die Stab‑LEDs
 | Rot (statisch) | Fehler / WLAN‑Verlust / kein Audio |
 | Lila (statisch) | Setup‑Modus aktiv (Klappe offen, Konfiguration läuft) |
 | Weiß‑Blink | Schuss abgegeben (Trigger gedrückt) |
+| Violett (statisch) | Kalibriermodus: Laser + IR‑LED dauerhaft an (DBG_CALIBRATE, Optik‑Justage) |
 
 **ID‑Anzeige beim Boot:** nach dem Yellow‑Flash blinkt die LED in der
 Stations‑Farbe (z. B. Cyan) **N‑mal**, wobei N die aktuelle Stations‑ID ist.
@@ -672,10 +673,13 @@ schon weiter als im ursprünglichen Audio‑Test. Stand 2026‑05‑16 (Bring‑
 | K2        | 36   | **Sound cyclen** (`gSoundIdx +1 mod 15`, nur Auswahl – KEIN Abspielen) |
 | K3        | 37   | Laser‑Toggle (active‑HIGH auf GPIO 7 → BC546C → Laser) |
 | K4        | 38   | **Vorhören**: aktuell ausgewählten Sound abspielen, ohne IR‑Burst |
-| Trigger   |  4   | Stab‑Trigger → IR‑Burst + aktuell ausgewählten Sound abspielen |
+| Trigger   |  4   | Stab‑Trigger → **IR‑Schuss** (5 ms Burst) + Weiß‑Blitz, KEIN Sound (Live‑Betrieb seit Station‑PR #14; Sound kommt per `HIT_REPORT` vom Target) |
 
-Test‑Ablauf am Tisch: K1 stellt die Lautstärke ein, K2 wählt den Sound aus,
-dann entweder K4 (lokales Vorhören) oder Trigger (echter „Schuss" mit IR).
+Test‑Ablauf am Tisch: K1 stellt die Lautstärke ein, K2 wählt den
+Vorhör‑Sound aus, K4 spielt ihn lokal ab. Der Trigger schießt nur noch
+(250 ms Cooldown); den Treffer‑Sound testet man über die Config‑Box
+(Test‑Sound bzw. später ein echtes Target). Das OLED‑Modul ist seit
+PR #14 optional (I²C‑Probe, sonst Headless‑Betrieb).
 
 Im Display (SH1106 128×64) wird der aktuell ausgewählte Sound in
 Zeile y=49 angezeigt, Format `S<NN>:<KurzName>` (z. B. `S04:Bubbles`). Der
