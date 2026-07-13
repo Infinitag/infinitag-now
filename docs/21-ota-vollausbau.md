@@ -76,10 +76,15 @@ Entwicklung erhalten.
 - Der eigene neue Stand wird **direkt in den inaktiven OTA-Slot
   gestreamt** (`Update.begin/write/end` während des HTTPS-Downloads) –
   braucht keinen Dateispeicher.
-- Reihenfolge bewusst: **Geräte-Images zuerst herunterladen, dann sich
-  selbst updaten.** Begründung: Nach dem Self-Update-Reboot liegen die
-  Images schon im LittleFS; und eine neue Box-Firmware kann neue
-  Protokoll-Details der neuen Geräte-Firmwares bereits sprechen.
+- **Reihenfolge revidiert (2026-07-13, Config-PR #23): Self-Update
+  ZUERST, dann Geräte-Images.** Begründung: Die Downloads sollen von der
+  neuesten Box-Firmware gemacht werden – deren Fixes an der
+  Download-Pipeline (FS-/CRC-Saga!) müssen aktiv sein, bevor Images
+  geladen werden. Der Lauf setzt sich nach dem Self-Update-Reboot
+  **automatisch fort** (Einmal-Flag im NVS, gelöscht direkt beim
+  Wiedereinstieg → kein Schleifen-Risiko; Helfer bestätigt nur einmal).
+  Historische Erst-Entscheidung („Images zuerst, ein Durchgang ohne
+  Reboot-Unterbrechung") in der Git-Historie dieses Dokuments.
 - Bestehende Schutzmechanik unverändert (Chip-Check, CRC, Timeout,
   Batterie-Gate ≥ 3,6 V bzw. USB).
 
@@ -195,7 +200,8 @@ AP-Hüpfen für Stationen weg, nach 4 ist das Zielbild komplett.
 - Standard-Partitionslayout + Ein-Image-Fach (Details/Begründung § 3.4);
   ein Rundgang pro Gerätetyp.
 - Self-Update streamt direkt in den OTA-Slot (kein Speicherbedarf).
-- Reihenfolge im Update-Lauf: Images laden → Self-Update → Verteilen.
+- Reihenfolge im Update-Lauf: Self-Update → (Auto-Resume) → Images
+  laden → Verteilen (revidiert 2026-07-13, vorher Images zuerst).
 - SoftAP-Weg bleibt als Fallback/Entwicklungsweg bestehen.
 
 ## 7. Verweise
