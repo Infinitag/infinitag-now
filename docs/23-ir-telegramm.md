@@ -110,8 +110,22 @@ Station (ir_id=N) ──IR: [v1|N|dmg|crc]──▶ Target
 
 **Migration = Flag-Day:** v0x03-Pakete werden von v0x02-Geräten am
 Versions-Byte verworfen (und umgekehrt), der alte Burst triggert den
-Decoder nicht. Update-Reihenfolge: Config-Box zuerst (Self-Update),
-dann Station(en) und Target(s) per Funk-Push/SoftAP.
+Decoder nicht. Funk-Reihenfolge: **Geräte zuerst, Box zuletzt** – eine
+bereits aktualisierte Box erreicht die alten Geräte nicht mehr (genau
+das ist beim Umstieg am 2026-07-24 passiert; Ausweg war ein
+Box-Downgrade per lokalem SoftAP-Update).
+
+**Rettungsanker (seit Core v3.1.0, 2026-07-24):** Als Konsequenz sind
+`DISCOVER_REQ`/`DISCOVER_REPLY` und `UPDATE_BEGIN`/`UPDATE_ACK`
+**versionstolerant** – eine neuere Box findet Geräte jeder
+Protokollversion (Listen-Marker `!`) und kann sie in den
+SoftAP-Update-Modus schicken; alles andere (Config, Treffer, Push)
+bleibt versionsgesperrt. Der eingefrorene Vertrag (Header, CRC,
+Payload-Semantik der vier Nachrichten) steht in `PROTOCOL.md`.
+Künftige Protokollbrüche brauchen damit weder USB noch eine
+Update-Reihenfolge. Gilt ab den Firmwares Station 0.5.1 /
+Config-Box 0.4.1 / Target 0.1.1; ältere Stände bleiben rückwirkend
+nur per USB bzw. Box-Downgrade erreichbar.
 
 ## 7. Offen / später
 
