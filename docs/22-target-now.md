@@ -62,11 +62,17 @@ Treffer an `loop()` übergeben.
 ```
         gültiges IR-Telegramm
 ARMED ───────────────────────► HIT ────────────► COOLDOWN ────► ARMED
-(Rainbow,                      (hit_time_ms:     (cooldown_ms:  (wieder
- 10-ms-Schritt)                 rote Welle,       gedimmtes      scharf)
-                                Switch-Pattern,   Blau-Pulsen,
-                                80-ms-Schritt)    Treffer ignor.)
+(Rainbow,                      (Grün-Blitz       (cooldown_ms:  (Rainbow =
+ 10-ms-Schritt)                 200 ms, dann      rote Welle     wieder
+                                hit_time_ms       läuft weiter,  scharf)
+                                rote Welle +      Treffer
+                                Switch-Pattern)   ignoriert)
 ```
+
+Seit 2026-07-24 (Hardware-Test-Feedback): kurzer **Grün-Blitz** als
+Treffer-Bestätigung (non-blocking, nach dem `HIT_REPORT` gesetzt), die
+rote Welle läuft bis zum Wiederscharfschalten durch (Helligkeits-Rampe
+über `hit_time + cooldown`); das blaue Cooldown-Pulsieren ist entfallen.
 
 - `HIT_REPORT` (shooter_id, sound_id, damage) geht **sofort** beim
   Übergang nach HIT raus (vor LED/Switch-Start) – Latenzbudget < 50 ms
