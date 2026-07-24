@@ -105,7 +105,7 @@ synchron. Default 0b111 = Verhalten wie früher.
 | `DEBUG_CMD` Test 2 (DBG_LED) | Ring-Testmuster R/G/B/W, `DBG_RES_OK` |
 | `DEBUG_CMD` Test 5 (DBG_TRIGGER) | **Umgedeutet als IR-Empfangs-Test:** nächstes gültiges Telegramm innerhalb des Timeouts → `DBG_RES_OK` (grüner Blitz, KEINE Hit-Aktion – zum Einschießen), sonst `DBG_RES_TIMEOUT` |
 | `DEBUG_CMD` sonstige (Sound/Laser/IR-Senden/Kalibrierung) | `DBG_RES_UNSUPPORTED` (Target hat weder Sound noch Sender) |
-| `PUSH_BEGIN`/`PUSH_END` | Noch ignoriert – Funk-Push-Update ist Etappe 4 (Doc 21 § 5), nächster geplanter Schritt |
+| `PUSH_BEGIN`/`PUSH_END` | An den `EspNowPushReceiver` (Core, Doc 21 E4) weitergereicht → blockierender Funk-Update-Modus: Ring pulsiert blau, Props aus; Erfolg = grün + Reboot neue FW, Fehler/30 s Funkstille = rot + Reboot alte FW (seit 2026-07-24) |
 
 Validierungsgrenzen bei `CFG_WRITE` (an die Config-Box-Ranges
 angelehnt): `sound_id` < SOUND_COUNT, `hit_time_ms` 100–60000,
@@ -161,4 +161,3 @@ infinitag-now-target/
   Box zeigt weiterhin ihren generischen Trigger-Test-Text. Ggf.
   Box-UI-Text für Targets anpassen.
 - Externer LED-Ausgang (GPIO 47, Doc 04) weiterhin ungenutzt.
-- Funk-Push-Update (EspNowPushReceiver) fehlt noch – Etappe 4.
