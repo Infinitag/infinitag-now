@@ -38,7 +38,7 @@ in den GitHub-Releases der Geräte-Repos.
 | [`infinitag-now-core`](https://github.com/Infinitag/infinitag-now-core) | Gemeinsame Bibliothek: Funkprotokoll (`PROTOCOL.md`), ESP-NOW-Service, SoftAP-Updater |
 | [`infinitag-now-station`](https://github.com/Infinitag/infinitag-now-station) | Station: Sound + Zauberstab (ESP32-S3, I²S-Audio, 12 V) |
 | [`infinitag-now-config`](https://github.com/Infinitag/infinitag-now-config) | Config-Box: Handheld-Konfigurator (ESP32-C3, OLED, Encoder) |
-| `infinitag-now-target` | Target-Firmware *(in Arbeit)* |
+| [`infinitag-now-target`](https://github.com/Infinitag/infinitag-now-target) | Target: IR-Empfänger am Ziel, LED-Ring, Prop-Schaltausgänge (ESP32-S3) |
 
 ## Doku
 
@@ -66,7 +66,7 @@ Peer-to-Peer-Funk – und ein Zauberstab statt eines Taggers.
 
 Doku & Wissensbasis (dieses Repo):
 [CC BY-NC-SA 4.0](LICENSE) – © 2026 Tobias Stewen. Die Firmware-Repos
-(core, station, config) stehen unter
+(core, station, config, target) stehen unter
 [PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/).
 Beides erlaubt nicht-kommerzielle Nutzung und Anpassung mit
 Namensnennung; **kommerzielle Nutzung nur mit vorheriger Genehmigung** –
