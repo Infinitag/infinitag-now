@@ -1,5 +1,11 @@
 # 08 – Software: Target (PlatformIO‑Projekt)
 
+> **ABGELÖST (2026-07-24):** Diese WLAN/HTTP-Firmware ist durch die
+> ESP-NOW-Firmware `infinitag-now-target` ersetzt – siehe
+> [`22-target-now.md`](22-target-now.md). Dieses Dokument bleibt als
+> Referenz für die alte Firmware und die portierten Teile
+> (LED-Animationen, Switch-Patterns) stehen.
+
 Quelle: `/Volumes/basteln/PlatformIo/Projects/Infinitag Target/`.
 
 PlatformIO‑Konfiguration (`platformio.ini`):

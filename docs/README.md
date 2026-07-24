@@ -73,6 +73,7 @@ Drei Hardware‑Bausteine, alle ESP32‑basiert:
 | [`19-pcb-split-netliste.md`](19-pcb-split-netliste.md) | **Arbeitsdokument** zum Station‑V2 PCB‑Split: Bauteil‑/Netz‑Aufteilung Logic‑Board ↔ Audio‑Board, Inter‑Board‑Pinout, EasyEDA‑Vorgehen |
 | [`20-configbox-steckbrett.md`](20-configbox-steckbrett.md) | **Aufbau‑Anleitung** für den Config‑Box‑Steckbrett‑Prototyp: Verdrahtung nach GPIO‑Plan v3, Flash‑Anleitung, Bring‑up in 6 Stufen, Troubleshooting |
 | [`21-ota-vollausbau.md`](21-ota-vollausbau.md) | **Konzept** OTA-Vollausbau: Box holt Releases selbst von GitHub (WLAN-Provisioning, HTTPS), aktualisiert sich und verteilt Firmware per ESP-NOW-Push an Stationen/Targets („Alle aktualisieren" ohne PC) |
+| [`22-target-now.md`](22-target-now.md) | **Lebendes Dokument** zur neuen Target-Firmware `infinitag-now-target` (ESP-NOW v0x02, IR-Burst-Erkennung nach Punkt 41, Zustandsmaschine, Config-Box-Anbindung, Bring-up-Checkliste) – löst Doc 08 ab |
 
 ## Quellverweise
 

@@ -1188,26 +1188,28 @@ auf dem neuen C3‑Träger‑PCB oder als Breakout in der Box platzieren.
 
 ### 41. Infinitag Now: IR‑Schuss‑Telegramm festlegen (mit Target‑Firmware)
 
-**Stand 2026‑07‑13:** Die Station schießt im Live‑Betrieb (Station‑PR #14)
-einen **rohen 5‑ms‑Burst @ 38 kHz** – bewusst noch ohne Datentelegramm.
-Das Target braucht den Schützen nicht zu identifizieren (es kennt „seine"
-Station aus der Config, `station_mac` im Target‑Blob, siehe `PROTOCOL.md`),
-aber ein reiner Burst ist nicht gegen Fremd‑IR (Fernbedienungen,
-Sonnenlicht‑Flackern) abgesichert.
+**ENTSCHIEDEN 2026‑07‑24 (mit Target‑FW 0.1.0): Burst‑Erkennung, kein
+Datentelegramm.** Das Target misst per GPIO‑Interrupt die Low‑Zeit des
+TSOP‑Ausgangs und akzeptiert Pulse im Fenster **2,5–9 ms** (Station
+sendet 5 ms, `IR_SHOT_MS`). Begründung: Station bleibt unverändert,
+minimale Latenz, robust bei Streifschüssen; Fernbedienungen fallen mit
+ihren <2‑ms‑Pulsen aus dem Fenster, und im dunklen Halloween‑Vorgarten
+ist Fremd‑IR praktisch unkritisch (ein Fehltrigger kostet nur einen
+Sound). Quelle: `infinitag-now-target/src/main.cpp` (`BURST_MIN_US`/
+`BURST_MAX_US`, `irIsr()`).
 
-**Zu entscheiden mit der Target‑Firmware (`infinitag-now-target`):**
+Das 24‑Bit‑Telegramm (Doc 05) bleibt als **spätere Option**, falls
+mehrere Wands unterschieden werden sollen oder Fremd‑IR doch stört –
+dann Umbau in Station (Sende‑Timing) + Target (Decoder) + ggf.
+Config‑Feld (Core‑Protokollergänzung, reserved‑Bytes im Target‑Blob).
 
-- Klassisches 24‑Bit‑RC5‑Telegramm aus Doc 05 wiederverwenden
-  (`Infinitag_Core::irEncode`, `isSystem=false, cmd=1`) – Vorteil:
-  vorhandene, erprobte Decode‑Routine; Nachteil: IRremote‑Abhängigkeit.
-- Oder eigenes minimales Now‑Format (z. B. Header‑Burst + 8 Bit Magic),
-  bit‑gebangt über LEDC – Vorteil: schlank, RMT/LEDC ohne Lib.
-- Latenz‑Budget beachten: < 50 ms IR‑Decode → `HIT_REPORT` → Sound‑Start
-  (Doc 12 § 3.7).
-
-Quelle: Station `src/main.cpp` (`IR_SHOT_MS`, Kommentar am Define),
-PROTOCOL.md „Spielbetrieb". Der Kalibriermodus (DBG_CALIBRATE, Test 6)
-ist davon unabhängig – er nutzt Dauerlicht statt Telegramm.
+Historie (Stand 2026‑07‑13): Station schießt seit PR #14 einen rohen
+5‑ms‑Burst @ 38 kHz; abgewogen wurde Telegramm (fremd‑IR‑fest,
+Schützen‑ID möglich, aber Station‑Umbau + engeres Latenzbudget) gegen
+Burst (schlank, latenzfrei). Latenz‑Budget < 50 ms IR → `HIT_REPORT` →
+Sound‑Start (Doc 12 § 3.7) wird mit Burst locker eingehalten. Der
+Kalibriermodus (DBG_CALIBRATE, Test 6) ist davon unabhängig – er nutzt
+Dauerlicht statt Telegramm.
 
 ### 42. Station: Lautstärke unten immer noch zu laut / wenig Spielraum
 
