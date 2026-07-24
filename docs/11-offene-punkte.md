@@ -1188,20 +1188,26 @@ auf dem neuen C3‑Träger‑PCB oder als Breakout in der Box platzieren.
 
 ### 41. Infinitag Now: IR‑Schuss‑Telegramm festlegen (mit Target‑Firmware)
 
-**ENTSCHIEDEN 2026‑07‑24 (mit Target‑FW 0.1.0): Burst‑Erkennung, kein
-Datentelegramm.** Das Target misst per GPIO‑Interrupt die Low‑Zeit des
-TSOP‑Ausgangs und akzeptiert Pulse im Fenster **2,5–9 ms** (Station
-sendet 5 ms, `IR_SHOT_MS`). Begründung: Station bleibt unverändert,
-minimale Latenz, robust bei Streifschüssen; Fernbedienungen fallen mit
-ihren <2‑ms‑Pulsen aus dem Fenster, und im dunklen Halloween‑Vorgarten
-ist Fremd‑IR praktisch unkritisch (ein Fehltrigger kostet nur einen
-Sound). Quelle: `infinitag-now-target/src/main.cpp` (`BURST_MIN_US`/
-`BURST_MAX_US`, `irIsr()`).
+**REVIDIERT 2026‑07‑24 (noch am selben Tag): IR‑Datentelegramm,
+Protokoll v0x03.** Beim Zielbild‑Abgleich (~15 Targets, 3+ Stationen,
+jeder Zauberstab schießt auf jedes Ziel) fiel die Burst‑Entscheidung:
+Ein roher Burst transportiert keine Schützen‑Identität, die statische
+`station_mac`‑Zuordnung skaliert nicht und war fehleranfällig
+(Null‑MAC‑Falle der Config‑Box beim ersten Hardware-Test). Neu:
+**16‑Bit‑Telegramm** (Version + `shooter_id` + `damage` + CRC‑4,
+Puls‑Distanz‑Codierung) – Spezifikation und Abwägung der Alternativen
+(Burst‑Längen‑Slots, Zeitkorrelation) in **[Doc 23](23-ir-telegramm.md)**
+und `PROTOCOL.md` (Core‑Repo). `damage` fährt bewusst ab Tag 1 mit
+(Reserve für Hitpoint‑Targets). Implementiert in
+Core/Station/Target/Config‑Box (PRs vom 2026‑07‑24, Flag‑Day‑Update),
+auf Hardware ungetestet.
 
-Das 24‑Bit‑Telegramm (Doc 05) bleibt als **spätere Option**, falls
-mehrere Wands unterschieden werden sollen oder Fremd‑IR doch stört –
-dann Umbau in Station (Sende‑Timing) + Target (Decoder) + ggf.
-Config‑Feld (Core‑Protokollergänzung, reserved‑Bytes im Target‑Blob).
+Erst‑Entscheidung vom selben Tag (überholt, mit Target‑FW 0.1.0):
+**Burst‑Erkennung, kein Datentelegramm** – Target misst per
+GPIO‑Interrupt die Low‑Zeit des TSOP‑Ausgangs, Fenster **2,5–9 ms**
+(Station sendete 5 ms, `IR_SHOT_MS`). Begründung damals: Station
+bleibt unverändert, minimale Latenz, robust bei Streifschüssen;
+Fernbedienungen fallen mit ihren <2‑ms‑Pulsen aus dem Fenster.
 
 Historie (Stand 2026‑07‑13): Station schießt seit PR #14 einen rohen
 5‑ms‑Burst @ 38 kHz; abgewogen wurde Telegramm (fremd‑IR‑fest,

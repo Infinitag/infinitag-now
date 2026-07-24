@@ -17,11 +17,13 @@ Vorgarten, einsetzbar überall, wo gespielt wird.
 ## So funktioniert es
 
 1. Der **Zauberstab** (an der Station) löst per Trigger einen
-   IR-Zauber aus – mit Laser-Zielhilfe und Statusfarben im Stab.
-2. Das **Target** am Ziel empfängt den IR-Impuls und meldet den
-   Treffer per Funk.
-3. Die **Station** spielt den passenden Sound-Effekt, das Target
-   schaltet Licht oder Props (z. B. eine sich öffnende Geistertür).
+   IR-Zauber aus – ein kurzes Telegramm mit der Kennung des Stabs,
+   dazu Laser-Zielhilfe und Statusfarben im Stab.
+2. Das **Target** am Ziel decodiert den Zauber (wer hat getroffen?)
+   und meldet den Treffer per Funk.
+3. Die **Station des Schützen** spielt den passenden Sound-Effekt, das
+   Target schaltet Licht oder Props (z. B. eine sich öffnende
+   Geistertür) – jeder Zauberstab kann auf jedes Ziel zaubern.
 4. Die **Config-Box** ist die Fernbedienung für alles: Geräte finden,
    einstellen, testen und über die Luft aktualisieren.
 
