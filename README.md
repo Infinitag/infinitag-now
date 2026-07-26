@@ -50,6 +50,8 @@ Die komplette Wissensbasis liegt in [`docs/`](docs/) – Einstieg über
 - `docs/12-refactor-station-v2.md` – Station V2 inkl. ESP-NOW-Protokoll (§ 3)
 - `docs/13-refactor-wand-v3.md` – Zauberstab V3 (Optik, Mechanik)
 - `docs/18-config-tool.md` – Config-Box (Konzept, Bedienung, Updates)
+- `docs/22-target-now.md` – Target-Firmware (Zustandsmaschine, Bring-up)
+- `docs/23-ir-telegramm.md` – IR-Schuss-Telegramm (Protokoll v0x03)
 - `docs/09-halloween-setup.md` – der ursprüngliche Einsatz als Beispiel
 
 Hinweis: Die Wissensbasis dokumentiert historisch auch das frühere
