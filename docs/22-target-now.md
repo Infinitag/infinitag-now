@@ -142,8 +142,9 @@ infinitag-now-target/
 3. Config-Box: Discovery → Target erscheint mit MAC-Suffix →
    Identify-Blinken prüfen.
 4. Edit-Menü: Sound wählen → Speichern → `CFG_ACK` OK? Reboot →
-   Config noch da (NVS)? (Stations-Editor: IR-ID prüfen – Werksgruppe 0
-   reicht für den Einzelplatz-Test.)
+   Config noch da (NVS)? (Die IR-ID der Station wird seit 2026-10-22
+   automatisch ausgehandelt – Stations-OLED zeigt `IR:n`, die Liste der
+   Box `IRn`; Doc 23 § 7.)
 5. Station schießen: Telegramm-Log am Target (`Schuetze`, `dmg`),
    Sound an der Station des Schützen, rote Welle + Switch-Pattern,
    danach Cooldown → Rainbow. Live-Monitor der Box zeigt den Treffer.

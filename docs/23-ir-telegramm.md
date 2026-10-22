@@ -61,10 +61,12 @@ hundert µs ab; unit-getestet bis ±200 µs Skew.
   v0x02-Burst (5 ms) erzeugen keine gültigen Frames.
 - Kollision (zwei Stationen treffen dasselbe Target überlappend):
   CRC schlägt fehl → kein Treffer; Kind schießt erneut. Bewusst so.
-- `ir_id` 0 ist **gültig** („Werksgruppe"): ab Werk spielen alle
-  Stationen gegenseitig ihre Treffer – Einzelplatz-Aufbau läuft ohne
-  Konfiguration. Mehrere Stationen → eindeutige IDs 1–15 per
-  Config-Box.
+- `ir_id` 0 ist **gültig** („noch nicht ausgehandelt"): eine Station
+  schießt und spielt als Gruppe 0, solange sie keine eigene ID hält.
+  **Seit 2026-10-22 (Core v3.5.0) handeln die Stationen ihre IDs 1–15
+  selbst aus** – niemand vergibt sie, auch die Config-Box nicht (siehe
+  § 7). Vorher: Werks-0 für alle, IDs manuell per Config-Box – im
+  Feldtest mit zwei Boxen spielten beide jeden Treffer (Punkt 44).
 
 ## 4. Latenzbudget (Ziel < 50 ms IR → Sound, Doc 12 § 3.7)
 
@@ -107,6 +109,30 @@ Station (ir_id=N) ──IR: [v1|N|dmg|crc]──▶ Target
 | `infinitag-now-station` | `sendIrTelegram()`, `ir_id` in Settings/Blob, HIT_REPORT-Filter auf ir_id | #22 |
 | `infinitag-now-target` | ISR → `IrtDecoder`, HIT_REPORT neu, `stationMac` entfernt | #5 |
 | `infinitag-now-config` | Stations-Editor + IR-ID, Target-Editor ohne Station-Picker, Live-Monitor | #26 |
+
+## 7. IR-ID-Aushandlung (2026-10-22, Core v3.5.0)
+
+Verbindliche Spec: `PROTOCOL.md` → „IR-ID-Aushandlung". Kurzfassung:
+
+| | |
+| --- | --- |
+| Nachrichten | `0x11 IRID_PROBE` („hat jemand ID n?"), `0x12 IRID_BEACON` („ich halte n", alle 2 s + sofort nach Erwerb) – beide Broadcast, versionsgesperrt, kein Versionssprung (Altgeräte ignorieren sie) |
+| Ablauf | Boot mit `ir_id` 0 → 3 s mithören (Beacons, Probes **und `HIT_REPORT`s** füllen die Belegungstabelle) → Kandidat (NVS-Vorzug, sonst `(MAC[5] mod 15)+1`, dann aufwärts) → 3× Probe im 150-ms-Abstand → keine Einrede → `HELD`, in NVS |
+| Konflikt | Inhaber schlägt Prober immer; Prober-vs-Prober und Inhaber-vs-Inhaber: **kleinere MAC gewinnt**, Verlierer geht direkt nach `PROBE` (≤ 0,5 s auf 0) |
+| Verfall | Belegung verfällt nach 8 s ohne Evidenz; alle 15 belegt → bleibt 0, Retry alle 30 s |
+| Fallback | `ir_id` 0 schießt und spielt als Gruppe 0 – kein Kind verliert in der Übergangsphase seinen Treffer-Sound |
+| Modul | `IrIdNegotiator.*` im Core, pures C++, 15 native Tests inkl. Bus-Simulation mit Paketverlust (`test/test_irid/`) |
+
+| Repo | Änderung | PR |
+| --- | --- | --- |
+| `infinitag-now-core` | Spec, `IrIdNegotiator`, Nachrichtentypen, Tests; Version 3.5.0 | #20, #23 |
+| `infinitag-now-station` | Negotiator eingebunden (Schuss, HIT_REPORT-Filter, Blob lesen `irId()`; `CFG_WRITE` ignoriert `ir_id`; Funk auch während `playWav()`; OLED `IR:?`/`IR:n`) | #36 |
+| `infinitag-now-config` | Editor-Feld „IR-ID" entfernt, Liste zeigt `IRn`/`IR?` | #46 |
+| `infinitag-now-target` | keine Änderung | – |
+
+Selbsttest 7 (`DBG_HIT`) sendet weiterhin `shooter_id` 0 – nach der
+Aushandlung spielt keine Station diesen Treffer (bewusst, Entscheidung
+2026-10-22: der Test dient dem Target allein).
 
 **Migration = Flag-Day:** v0x03-Pakete werden von v0x02-Geräten am
 Versions-Byte verworfen (und umgekehrt), der alte Burst triggert den

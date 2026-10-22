@@ -1258,3 +1258,38 @@ um.
 Hysterese 0,1 V, Abtastung alle 2 s. Doc 18 § 4.2/§ 9 A2 und Doc 20 § 5
 nachgezogen. Quelle: `src/Config.h`, `src/UiController.cpp`
 (`pollBattery`, `drawBattIcon`).
+
+### 44. Zwei Stationen teilen sich jeden Treffer – IR‑ID‑Aushandlung (erledigt 2026‑10‑22, Hardware‑Test offen)
+
+**Beobachtung 2026‑10‑22 (Feldtest mit zwei Stationen):** Beide Boxen
+sendeten das identische IR‑Telegramm, beide spielten jeden Treffer, im
+Live‑Monitor der Box sahen alle `HIT_REPORT`s gleich aus (`Schütze 0`).
+Nebenwirkung: Die „ruhende" Box spielte 1–2 s lang jeden Fremd‑Treffer
+blockierend – Trigger‑Drücke in dieser Zeit gingen verloren („Station
+hängt", schoss erst bei längerem Halten). Ursache: beide auf
+Werks‑`ir_id` 0, `HIT_REPORT` ist Broadcast und wird per `shooter_id`
+gefiltert (`NowStation.cpp`, `MSG_HIT_REPORT`). Protokollgemäß, aber im
+Spielbetrieb unbrauchbar; IDs per Config‑Box vergeben wollte Tobias
+nicht (Zero‑Config).
+
+**Erledigt (Core v3.5.0, Station #36, Config #46):** Stationen handeln
+ihre `ir_id` selbst aus – Doc 23 § 7, Spec in `PROTOCOL.md`. Dazu zwei
+Station‑Fixes aus demselben Feldtest: Trigger‑Druck während der
+Wiedergabe wird gemerkt und nachgeholt (#37), Stab‑LED wird alle 500 ms
+aufgefrischt statt nur bei Farbwechsel (#38 – Verdacht für „Stab nicht
+grün": Glitch oder fremder `show()` blieb mangels Refresh stehen).
+
+**Offen / Verifikationspunkte:**
+- Hardware‑Test: zwei Stationen booten → OLED `IR:n` verschieden, Box‑Liste
+  `IRn`, nur die schießende Box spielt; Druck während eines Treffer‑Sounds
+  löst danach einen Schuss aus; DBG_LED → Stab fällt nach 0,5 s auf die
+  Statusfarbe zurück.
+- „Stab nicht grün" ist **nicht sicher erklärt**: Wenn der Stab nach einem
+  Treffer‑Zyklus (rot → zurück) wieder im falschen Zustand landet, ist es
+  nicht der fehlende Refresh, sondern Hardware (grüner Die der ersten
+  SK6812, 5‑V‑Einbruch am Stabkabel, Datenleitung) oder ein geändertes
+  `ledReady` (Log: `[NOW] CFG_WRITE`).
+- Alt‑Firmware‑Stationen mit NVS‑`ir_id` ≠ 0 senden keine Beacons → alle
+  Stationen zusammen aktualisieren (Tobias macht das direkt).
+- Stations‑ und Config‑Firmware‑Version für den Release noch nicht
+  erhöht (Vorschlag: Station 1.1.0, Config nächste Minor).
