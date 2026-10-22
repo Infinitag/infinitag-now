@@ -1282,8 +1282,10 @@ grün": Glitch oder fremder `show()` blieb mangels Refresh stehen).
 **Offen / Verifikationspunkte:**
 - **Hardware‑Test bestanden 2026‑10‑22 (zwei Stationen):** IDs werden
   verschieden ausgehandelt, nur die schießende Box spielt.
-- Noch offen: Druck während eines Treffer‑Sounds löst danach einen Schuss
-  aus (#37); DBG_LED → Stab fällt nach 0,5 s auf die Statusfarbe zurück
+- #37 (Druck nachholen) war falsch: nach dem eigenen Treffer‑Sound kam
+  ein „Geister‑Schuss" aus der Warteschlange. Revidiert in #41: Drücke
+  während der Wiedergabe zählen nicht, erst ein neuer Druck danach
+  schießt. Noch offen: DBG_LED → Stab fällt nach 0,5 s auf die Statusfarbe zurück
   (#38).
 - „Stab nicht grün" ist **nicht sicher erklärt**: Wenn der Stab nach einem
   Treffer‑Zyklus (rot → zurück) wieder im falschen Zustand landet, ist es
