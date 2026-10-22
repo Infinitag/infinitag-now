@@ -129,6 +129,7 @@ Nach jeder Stufe erst weiter, wenn sie sauber läuft:
 | Bootloop nach Verdrahtung | Strapping-Pin belastet: GPIO2 muss frei bleiben, GPIO8/9 nicht extern beschalten |
 | Kein Upload-Port | BOOT-Taste-Trick (§ 3); anderes USB-Kabel (Ladekabel ohne Datenadern sind häufig) |
 | VBAT-Anzeige zu niedrig und springend (z. B. 4,2–5,0 V statt 6,4 V) | Teiler zu hochohmig für den ADC-Sample-Kondensator → **100 nF von GPIO3 nach GND** direkt am Teiler-Mittelpunkt. Zusätzlich mittelt die FW seit 2026-07-10 über 8 Samples. Beobachtet beim Bring-up 2026-07-10 |
+| Box „springt" bei Stationen/Targets/Update-Modus sofort ins Hauptmenü zurück, Firmware-Info funktioniert | Brownout-Reset unter Funklast (Discovery-Broadcast, SoftAP-Start) – Batterien zu schwach, obwohl die Anzeige noch ~5,1 V zeigt. Alle vier AA ersetzen (frisch ≈ 5,8 V). Beim Serial-Monitor steht in der Boot-Zeile `BROWNOUT`. Seit PR „Batteriewarnung" blinkt ab ≤ 5,3 V ein Batteriesymbol in der Titelzeile, ab ≤ 5,2 V meldet das Hauptmenü „Batterie tauschen!". Beobachtet 2026-10-22 bei 5,07–5,17 V |
 | ESP-NOW-Init-Fehler im Log | Sollte nicht passieren; falls doch: Arduino-Core-Version prüfen (espressif32@^6.x, Core 2.x – Core 3.x hat andere recv-Callback-Signatur) |
 
 ## 6. Offene Verifikationspunkte (aus Doc 18 § 4.3)

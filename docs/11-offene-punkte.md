@@ -1234,3 +1234,27 @@ Fokus aktuell"). Mögliche Hebel, wenn es wieder ansteht:
 
 Quelle: Hörtest 2026-07-13 (2 % deutlich hörbar, auch nach Kurve
 gefühlt laut); `src/main.cpp` `applyStationConfig()`.
+
+### 43. Config‑Box: Brownout unter Funklast schon bei ~5,1 V – Batterieschwellen (erledigt 2026‑10‑22)
+
+**Beobachtung 2026‑10‑22:** Die Box „sprang" aus „Stationen", „Targets"
+und „Update‑Modus" sofort ins Hauptmenü zurück, Firmware‑Info lief
+normal. VBAT‑Anzeige 5,07–5,17 V. Ursache: Brownout‑Reset beim ersten
+Sendeimpuls (Discovery‑Broadcast bzw. SoftAP‑Start) – der einzige Weg
+von diesen Screens ins Hauptmenü ist ein Reset (`UiController::begin()`
+→ `gotoScreen(SCR_MAIN)`). Mit frischen Zellen (5,78 V) war alles
+wieder gut. Erst vermutete Ursache (alte WLAN‑Zugangsdaten im NVS)
+ausgeschlossen: die werden nur in `NetUpdater::connectWifi()` gelesen,
+keiner der betroffenen Screens fasst sie an.
+
+**Diskrepanz zur Doku:** Doc 18 § 4.2 nannte „< ~4,0 V" als Brownout‑
+Grenze und die Update‑Sperre `VBAT_MIN_FOR_UPDATE` stand auf 3,6 V (ein
+Einzel‑LiPo‑Wert) – beim 4×AA‑Pack greift das nie, die Box fällt vorher
+um.
+
+**Erledigt mit Config‑PR „feat: Batteriewarnung":** `VBAT_WARN_V = 5,3 V`
+(blinkendes Batteriesymbol in der Titelzeile, Update‑Sperre),
+`VBAT_REPLACE_V = 5,2 V` (Fußzeile „Batterie tauschen!" im Hauptmenü),
+Hysterese 0,1 V, Abtastung alle 2 s. Doc 18 § 4.2/§ 9 A2 und Doc 20 § 5
+nachgezogen. Quelle: `src/Config.h`, `src/UiController.cpp`
+(`pollBattery`, `drawBattIcon`).

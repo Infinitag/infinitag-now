@@ -169,10 +169,20 @@ USB‑C (Flashen/Service) ──────────────────
 - Stromaufnahme geschätzt **80–100 mA** (C3 mit aktivem WiFi + OLED +
   LED) → mit 2000‑mAh‑Alkalines **15–20 h** Laufzeit. Für ein
   Setup‑Werkzeug mehr als genug.
-- Leere Batterien (< ~4,0 V gesamt) äußern sich als Brownout‑Resets.
-  Eine Batteriespannungs‑Messung per Spannungsteiler ist mangels
-  freier Pins (und wegen Strapping‑Randbedingungen an GPIO2) **nicht**
-  vorgesehen – Zellen wechseln und gut.
+- Leere Batterien äußern sich als Brownout‑Resets **unter Funklast** –
+  und das deutlich früher als die ursprünglich angenommenen ~4,0 V:
+  **Feldbeobachtung 2026‑10‑22:** bei 5,07–5,17 V Leerlauf (≈ 1,28 V
+  pro Zelle) bricht das Pack beim ersten Sendeimpuls (Discovery‑
+  Broadcast bei „Stationen"/„Targets", SoftAP‑Start im Update‑Modus)
+  so weit ein, dass der C3 resettet. Symptom: Box „springt" aus diesen
+  Screens ins Hauptmenü zurück, Firmware‑Info (kein Funk) geht weiter.
+  Frische Alkalines zeigen ~5,8 V. Die Firmware überwacht VBAT deshalb
+  (seit Config‑PR „Batteriewarnung", Konstanten in `Config.h`):
+  **≤ 5,3 V** blinkendes Batteriesymbol rechts in der gelben Titelzeile
+  (alle Screens) und Update‑Sperre; **≤ 5,2 V** zusätzlich Fußzeile
+  „Batterie tauschen! (x,xx V)" im Hauptmenü. Hysterese 0,1 V,
+  Abtastung alle 2 s. Die Messung selbst: § 4.3 (GPIO3‑Teiler,
+  ursprünglich nicht vorgesehen, seit v3 drin).
 
 ### 4.3 GPIO‑Plan (C3 Super Mini, Konzept v3)
 
@@ -422,8 +432,11 @@ Tobias    Config‑Box                 Gerät
   Core‑Repo – identisch für Station, Target und Config‑Box.
 
 **A2 – Config‑Box selbst aktualisieren:** Tools → „Update‑Modus". Gleicher
-Mechanismus lokal (AP `infinitag-cfg-XXXXXX`), vorher **Batterie‑Check**
-(unter 3,6 V Akku wird verweigert; < 3,0 V gemessen = USB‑Betrieb = OK).
+Mechanismus lokal (AP `infinitag-cfg-XXXXXX`, Seite `http://192.168.4.1`),
+vorher **Batterie‑Check** (≤ 5,3 V beim 4×AA‑Pack wird verweigert – die
+Schwelle, ab der das Batteriesymbol blinkt, § 4.2; ≤ 3,0 V gemessen =
+USB‑Betrieb = OK. Bis 2026‑10‑22 lag die Sperre bei 3,6 V, einem
+Einzel‑LiPo‑Wert, der beim AA‑Pack nie vor dem Brownout griff).
 Verlassen des Modus = Reboot (ESP‑NOW ist abgebaut).
 
 **A3 – Versions‑Check:** jedes `DISCOVER_REPLY` enthält `fw_version`.
