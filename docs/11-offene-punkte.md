@@ -1291,5 +1291,8 @@ grün": Glitch oder fremder `show()` blieb mangels Refresh stehen).
   `ledReady` (Log: `[NOW] CFG_WRITE`).
 - Alt‑Firmware‑Stationen mit NVS‑`ir_id` ≠ 0 senden keine Beacons → alle
   Stationen zusammen aktualisieren (Tobias macht das direkt).
-- Stations‑ und Config‑Firmware‑Version für den Release noch nicht
-  erhöht (Vorschlag: Station 1.1.0, Config nächste Minor).
+- Released 2026‑10‑22: Station **v1.1.0** (#39), Config **v1.2.0** (#48),
+  Core **v3.5.0**. Nebenbefund: Der Station‑Release‑Workflow scheiterte
+  zuerst, weil `platform = espressif32` ungepinnt war und der Runner die
+  7.x‑Plattform mit Arduino‑Core 3.3 zog (`ledcSetup` entfernt) – jetzt
+  wie Config/Target auf `^6.7.0` gepinnt (#40), Tag neu gesetzt.
