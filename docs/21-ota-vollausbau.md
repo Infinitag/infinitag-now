@@ -40,6 +40,17 @@ Entwicklung erhalten.
 
 - Neue Seite auf dem vorhandenen SoftAP-Webserver der Box:
   SSID + Passwort eingeben → NVS (`inow-config`, Keys `wifi_ssid`/`wifi_pass`).
+  **Seit 2026‑10‑22 (Config‑PR #44):** Knopf „WLANs suchen" – asynchroner
+  Scan (`GET /scan`, `WIFI_AP_STA`), Liste stärkstes zuerst, Klick
+  übernimmt die SSID; Helfer `WifiScanJson.h` nativ getestet
+  (`pio test -e native`). Während eines Uploads wird der Scan verweigert.
+- **Captive Portal (Core‑PR #21, 2026‑10‑22):** `WebUpdateService` beantwortet
+  jede DNS‑Anfrage mit 192.168.4.1 und schickt fremde Hosts per 302 auf
+  die Seite – das Handy bietet sie nach dem Verbinden selbst an (gilt für
+  Box, Station, Target). Grenze: Der Captive‑Browser von iOS/Android ist
+  eingeschränkt; das WLAN‑Formular geht dort, ein Firmware‑Upload per
+  Dateiauswahl kann einen echten Browser unter `http://192.168.4.1`
+  brauchen.
 - Kein Dauerbetrieb im WLAN: Die Box verbindet sich **nur im
   Update-Modus** mit dem Heim-WLAN und kehrt danach zu ESP-NOW zurück
   (Reboot, wie beim heutigen Update-Modus – sauberer Funk-Zustand).

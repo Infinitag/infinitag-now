@@ -432,7 +432,9 @@ Tobias    Config‑Box                 Gerät
   Core‑Repo – identisch für Station, Target und Config‑Box.
 
 **A2 – Config‑Box selbst aktualisieren:** Tools → „Update‑Modus". Gleicher
-Mechanismus lokal (AP `infinitag-cfg-XXXXXX`, Seite `http://192.168.4.1`),
+Mechanismus lokal (AP `infinitag-cfg-XXXXXX`, Seite `http://192.168.4.1` –
+seit Core‑PR #21 als Captive Portal: das Handy bietet die Seite nach dem
+Verbinden selbst an, Details Doc 21 § 3.1),
 vorher **Batterie‑Check** (≤ 5,3 V beim 4×AA‑Pack wird verweigert – die
 Schwelle, ab der das Batteriesymbol blinkt, § 4.2; ≤ 3,0 V gemessen =
 USB‑Betrieb = OK. Bis 2026‑10‑22 lag die Sperre bei 3,6 V, einem
