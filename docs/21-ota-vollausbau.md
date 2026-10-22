@@ -44,6 +44,17 @@ Entwicklung erhalten.
   Scan (`GET /scan`, `WIFI_AP_STA`), Liste stärkstes zuerst, Klick
   übernimmt die SSID; Helfer `WifiScanJson.h` nativ getestet
   (`pio test -e native`). Während eines Uploads wird der Scan verweigert.
+  Captive‑Browser‑Tauglichkeit (Fix 2026‑10‑22): Hover‑Styles nur bei
+  Maus (`@media (hover:hover)`, sonst Doppeltipp auf iOS), kein
+  `disabled`/`focus()` im Scan‑Skript, Eingabefelder `readonly` bis zur
+  echten Berührung + Blur beim Laden (der Captive‑Browser fokussiert sonst
+  das erste Feld und die Tastatur verdeckt die Seite).
+- **Wiedereinstieg nach dem Netz‑Update (Fix 2026‑10‑22):** `gNet.begin()`
+  läuft jetzt **vor** `gUi.begin()` – vorher ging der Resume‑Discovery‑
+  Broadcast ins Leere und „Push = Alle aktualisieren" blieb in der leeren
+  Liste stehen. Das Sammel‑Update startet, sobald Antworten da sind
+  (Fenster 2,5 s, einmal Discovery‑Wiederholung, danach Aufgabe mit
+  Log‑Zeile).
 - **Captive Portal (Core‑PR #21, 2026‑10‑22):** `WebUpdateService` beantwortet
   jede DNS‑Anfrage mit 192.168.4.1 und schickt fremde Hosts per 302 auf
   die Seite – das Handy bietet sie nach dem Verbinden selbst an (gilt für

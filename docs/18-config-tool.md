@@ -179,10 +179,16 @@ USB‑C (Flashen/Service) ──────────────────
   Frische Alkalines zeigen ~5,8 V. Die Firmware überwacht VBAT deshalb
   (seit Config‑PR „Batteriewarnung", Konstanten in `Config.h`):
   **≤ 5,3 V** blinkendes Batteriesymbol rechts in der gelben Titelzeile
-  (alle Screens) und Update‑Sperre; **≤ 5,2 V** zusätzlich Fußzeile
-  „Batterie tauschen! (x,xx V)" im Hauptmenü. Hysterese 0,1 V,
-  Abtastung alle 2 s. Die Messung selbst: § 4.3 (GPIO3‑Teiler,
-  ursprünglich nicht vorgesehen, seit v3 drin).
+  (alle Screens) und Update‑Sperre; **≤ 5,2 V** **Sperr‑Screen**
+  „Batterie leer – bitte neue Batterien einlegen" ohne Menü und ohne
+  Aktionen (verschwindet erst, wenn die Spannung wieder stimmt, also
+  praktisch nach dem Zellentausch). Logik in `BatteryMonitor.h` (nativ
+  getestet): Hysterese 0,1 V, Herabstufen erst nach **2 Messungen in
+  Folge**, Abtastung alle 2 s **nur bei ruhendem Funk** – während
+  Funk‑Push/Sammel‑Update/Update‑Modus wird nicht gemessen, weil ein
+  frisches 5,8‑V‑Pack dort auf ~5,2 V einbricht (Feldtest 2026‑10‑22:
+  Symbol blinkte fälschlich beim Sammel‑Update). Die Messung selbst:
+  § 4.3 (GPIO3‑Teiler, ursprünglich nicht vorgesehen, seit v3 drin).
 
 ### 4.3 GPIO‑Plan (C3 Super Mini, Konzept v3)
 
