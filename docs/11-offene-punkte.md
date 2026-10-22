@@ -1280,10 +1280,11 @@ aufgefrischt statt nur bei Farbwechsel (#38 – Verdacht für „Stab nicht
 grün": Glitch oder fremder `show()` blieb mangels Refresh stehen).
 
 **Offen / Verifikationspunkte:**
-- Hardware‑Test: zwei Stationen booten → OLED `IR:n` verschieden, Box‑Liste
-  `IRn`, nur die schießende Box spielt; Druck während eines Treffer‑Sounds
-  löst danach einen Schuss aus; DBG_LED → Stab fällt nach 0,5 s auf die
-  Statusfarbe zurück.
+- **Hardware‑Test bestanden 2026‑10‑22 (zwei Stationen):** IDs werden
+  verschieden ausgehandelt, nur die schießende Box spielt.
+- Noch offen: Druck während eines Treffer‑Sounds löst danach einen Schuss
+  aus (#37); DBG_LED → Stab fällt nach 0,5 s auf die Statusfarbe zurück
+  (#38).
 - „Stab nicht grün" ist **nicht sicher erklärt**: Wenn der Stab nach einem
   Treffer‑Zyklus (rot → zurück) wieder im falschen Zustand landet, ist es
   nicht der fehlende Refresh, sondern Hardware (grüner Die der ersten
